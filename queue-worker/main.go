@@ -52,12 +52,28 @@ func main() {
 	val, _ := os.Hostname()
 	clientID := "faas-worker-" + val
 
+	natsAddress := "nats"
+	gatewayAddress := "gateway"
+	functionSuffix := ""
+
+	if val, exists := os.LookupEnv("faas_nats_address"); exists {
+		natsAddress = val
+	}
+
+	if val, exists := os.LookupEnv("faas_gateway_address"); exists {
+		gatewayAddress = val
+	}
+
+	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
+		functionSuffix = val
+	}
+
 	var durable string
 	var qgroup string
 	var unsubscribe bool
 
 	client := makeClient()
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://nats:4222"))
+	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
 	if err != nil {
 		log.Fatalf("Can't connect: %v\n", err)
 	}
@@ -73,7 +89,7 @@ func main() {
 		req := queue.Request{}
 		json.Unmarshal(msg.Data, &req)
 		fmt.Printf("Request for %s.\n", req.Function)
-		urlFunction := fmt.Sprintf("http://%s:8080/", req.Function)
+		urlFunction := fmt.Sprintf("http://%s%s:8080/", req.Function, functionSuffix)
 
 		request, err := http.NewRequest("POST", urlFunction, bytes.NewReader(req.Body))
 		res, err := client.Do(request)
@@ -82,7 +98,7 @@ func main() {
 			log.Println(err)
 			timeTaken := time.Since(started).Seconds()
 
-			postReport(&client, req.Function, http.StatusServiceUnavailable, timeTaken)
+			postReport(&client, req.Function, http.StatusServiceUnavailable, timeTaken, gatewayAddress)
 			return
 		}
 
@@ -100,8 +116,7 @@ func main() {
 		}
 		fmt.Println(res.Status)
 
-		postReport(&client, req.Function, res.StatusCode, timeTaken)
-
+		postReport(&client, req.Function, res.StatusCode, timeTaken, gatewayAddress)
 	}
 
 	subj := "faas-request"
@@ -133,7 +148,7 @@ func main() {
 	<-cleanupDone
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64) {
+func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string) {
 	req := AsyncReport{
 		FunctionName: function,
 		StatusCode:   statusCode,
@@ -141,7 +156,7 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	}
 
 	reqBytes, _ := json.Marshal(req)
-	request, err := http.NewRequest("POST", "http://gateway:8080/system/async-report", bytes.NewReader(reqBytes))
+	request, err := http.NewRequest("POST", "http://"+gatewayAddress+":8080/system/async-report", bytes.NewReader(reqBytes))
 	res, err := client.Do(request)
 
 	if err != nil {

@@ -73,6 +73,13 @@ type PrometheusAlert struct {
 type Function struct {
 	Name            string  `json:"name"`
 	Image           string  `json:"image"`
-	InvocationCount float64 `json:"invocationCount"`
+	InvocationCount float64 `json:"invocationCount"` // TODO: shouldn't this be int64?
 	Replicas        uint64  `json:"replicas"`
+}
+
+// AsyncReport is the report from a function executed on a queue worker.
+type AsyncReport struct {
+	FunctionName string  `json:"name"`
+	StatusCode   int     `json:"statusCode"`
+	TimeTaken    float64 `json:"timeTaken"`
 }
