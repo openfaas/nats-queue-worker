@@ -177,7 +177,10 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 
 	request, err := http.NewRequest("POST", req.CallbackURL.String(), reader)
 	res, err := client.Do(request)
-	defer request.Body.Close()
+	if request.Body != nil {
+		defer request.Body.Close()
+	}
+
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
