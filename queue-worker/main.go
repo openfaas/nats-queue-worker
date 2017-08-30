@@ -177,17 +177,18 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 
 	request, err := http.NewRequest("POST", req.CallbackURL.String(), reader)
 	res, err := client.Do(request)
+
+	if err != nil {
+		log.Printf("Error posting result to URL %s %s\n", req.CallbackURL.String(), err.Error())
+		return
+	}
+
 	if request.Body != nil {
 		defer request.Body.Close()
 	}
 
 	if res.Body != nil {
 		defer res.Body.Close()
-	}
-
-	if err != nil {
-		log.Printf("Error posting result to URL %s %s\n", req.CallbackURL.String(), err.Error())
-		return
 	}
 
 	log.Printf("Posting result - %d\n", res.StatusCode)
@@ -202,15 +203,16 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest("POST", "http://"+gatewayAddress+":8080/system/async-report", bytes.NewReader(reqBytes))
-	res, err := client.Do(request)
 	defer request.Body.Close()
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
+
+	res, err := client.Do(request)
 
 	if err != nil {
 		log.Println("Error posting report", err)
 		return
+	}
+	if res.Body != nil {
+		defer res.Body.Close()
 	}
 	log.Printf("Posting report - %d\n", res.StatusCode)
 
