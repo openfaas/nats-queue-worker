@@ -2,7 +2,8 @@ FROM golang:1.7.5 as golang
 WORKDIR /go/src/github.com/alexellis/faas/queue-worker
 
 COPY vendor     vendor
-COPY main.go  .
+COPY types.go   .
+COPY main.go    .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
