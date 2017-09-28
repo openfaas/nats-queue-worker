@@ -31,7 +31,7 @@ func main() {
 	faasWriteDebug := true
 
 	if val, exists := os.LookupEnv("faas_write_debug"); exists {
-		faasWriteDebug = (val == "false")
+		faasWriteDebug = (val == "true" || val == "1")
 	}
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
@@ -45,6 +45,8 @@ func main() {
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		functionSuffix = val
 	}
+
+	fmt.Printf("Write debug: %t\n", faasWriteDebug)
 
 	var durable string
 	var queueGroup string
