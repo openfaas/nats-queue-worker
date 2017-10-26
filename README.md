@@ -1,6 +1,6 @@
 ## Queue worker for OpenFaaS - NATS Streaming
 
-Hub image: functions/queue-worker:0.1
+Hub image: [functions/queue-worker:0.1.1](https://hub.docker.com/r/functions/queue-worker/)
 
 License: MIT
 
