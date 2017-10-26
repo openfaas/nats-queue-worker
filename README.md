@@ -4,7 +4,7 @@ Hub image: [functions/queue-worker:0.1.1](https://hub.docker.com/r/functions/que
 
 License: MIT
 
-Snapshots from keynote on synchronous vs async.
+Screenshots from keynote / video - find out more over at https://www.openfaas.com/
 
 <img width="1440" alt="screen shot 2017-10-26 at 15 55 25" src="https://user-images.githubusercontent.com/6358735/32060207-049d4afa-ba66-11e7-8fc2-f4a0a84cbdaf.png">
 
