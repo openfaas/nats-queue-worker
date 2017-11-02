@@ -18,34 +18,6 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 )
 
-// AsyncReport is the report from a function executed on a queue worker.
-type AsyncReport struct {
-	FunctionName string  `json:"name"`
-	StatusCode   int     `json:"statusCode"`
-	TimeTaken    float64 `json:"timeTaken"`
-}
-
-func printMsg(m *stan.Msg, i int) {
-	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
-}
-
-func makeClient() http.Client {
-	proxyClient := http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   3 * time.Second,
-				KeepAlive: 0,
-			}).DialContext,
-			MaxIdleConns:          1,
-			DisableKeepAlives:     true,
-			IdleConnTimeout:       120 * time.Millisecond,
-			ExpectContinueTimeout: 1500 * time.Millisecond,
-		},
-	}
-	return proxyClient
-}
-
 func main() {
 	log.SetFlags(0)
 
@@ -56,6 +28,11 @@ func main() {
 	natsAddress := "nats"
 	gatewayAddress := "gateway"
 	functionSuffix := ""
+	faasWriteDebug := true
+
+	if val, exists := os.LookupEnv("faas_write_debug"); exists {
+		faasWriteDebug = (val == "true" || val == "1")
+	}
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
 		natsAddress = val
@@ -69,11 +46,16 @@ func main() {
 		functionSuffix = val
 	}
 
+	fmt.Printf("Write debug: %t\n", faasWriteDebug)
+
 	var durable string
-	var qgroup string
+	var queueGroup string
 	var unsubscribe bool
 
-	client := makeClient()
+	dialTimeout := 3 * time.Second
+
+	// Same client instance is reused.
+	client := makeClient(dialTimeout)
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
 	if err != nil {
 		log.Fatalf("Can't connect: %v\n", err)
@@ -83,13 +65,16 @@ func main() {
 	i := 0
 	mcb := func(msg *stan.Msg) {
 		i++
-		printMsg(msg, i)
+
+		printMsg(msg, i, faasWriteDebug)
 
 		started := time.Now()
 
 		req := queue.Request{}
 		json.Unmarshal(msg.Data, &req)
 		fmt.Printf("Request for %s.\n", req.Function)
+
+		// POSTs directly to function via DNS lookup using req.Function name.
 		urlFunction := fmt.Sprintf("http://%s%s:8080/", req.Function, functionSuffix)
 
 		request, err := http.NewRequest("POST", urlFunction, bytes.NewReader(req.Body))
@@ -107,7 +92,8 @@ func main() {
 
 			if req.CallbackURL != nil {
 				log.Printf("Callback to: %s\n", req.CallbackURL.String())
-				postResult(&client, req, functionResult, status)
+				resultReader := bytes.NewReader(functionResult)
+				postResult(&client, req, resultReader, status)
 			}
 
 			postReport(&client, req.Function, status, timeTaken, gatewayAddress)
@@ -123,31 +109,36 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Println(string(functionResult))
+			if faasWriteDebug {
+				fmt.Println(string(functionResult))
+			}
 		}
+
 		timeTaken := time.Since(started).Seconds()
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(res.Status)
+
+		fmt.Printf("Result: %s\n", res.Status)
 
 		if req.CallbackURL != nil {
 			log.Printf("Callback to: %s\n", req.CallbackURL.String())
-			postResult(&client, req, functionResult, res.StatusCode)
+			resultReader := bytes.NewReader(functionResult)
+			postResult(&client, req, resultReader, res.StatusCode)
 		}
 
 		postReport(&client, req.Function, res.StatusCode, timeTaken, gatewayAddress)
 	}
 
 	subj := "faas-request"
-	qgroup = "faas"
+	queueGroup = "faas"
 
-	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable))
+	sub, err := sc.QueueSubscribe(subj, queueGroup, mcb, startOpt, stan.DurableName(durable))
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	log.Printf("Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n", subj, clientID, qgroup, durable)
+	log.Printf("Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n", subj, clientID, queueGroup, durable)
 
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
 	// Run cleanup when signal is received
@@ -157,10 +148,12 @@ func main() {
 	go func() {
 		for _ = range signalChan {
 			fmt.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
+
 			// Do not unsubscribe a durable on exit, except if asked to.
 			if durable == "" || unsubscribe {
 				sub.Unsubscribe()
 			}
+
 			sc.Close()
 			cleanupDone <- true
 		}
@@ -168,14 +161,37 @@ func main() {
 	<-cleanupDone
 }
 
-func postResult(client *http.Client, req queue.Request, result []byte, statusCode int) {
-	var reader io.Reader
-
-	if result != nil {
-		reader = bytes.NewReader(result)
+func printMsg(m *stan.Msg, i int, writeDebug bool) {
+	if writeDebug {
+		log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
+	} else {
+		log.Printf("[#%d] Received on [%s].\n", i, m.Subject)
 	}
+}
 
-	request, err := http.NewRequest("POST", req.CallbackURL.String(), reader)
+func makeClient(dialTimeout time.Duration) http.Client {
+	proxyClient := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   dialTimeout,
+				KeepAlive: 0,
+			}).DialContext,
+			MaxIdleConns:          1,
+			DisableKeepAlives:     true, // enables round-robin behavior
+			IdleConnTimeout:       120 * time.Millisecond,
+			ExpectContinueTimeout: 1500 * time.Millisecond,
+		},
+	}
+	return proxyClient
+}
+
+// postResult - only POST method is supported for calling back with result.
+func postResult(client *http.Client, req queue.Request, reader io.Reader, statusCode int) {
+
+	callbackURL := req.CallbackURL.String()
+
+	request, err := http.NewRequest("POST", callbackURL, reader)
 	res, err := client.Do(request)
 
 	if err != nil {
@@ -191,7 +207,7 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 		defer res.Body.Close()
 	}
 
-	log.Printf("Posting result - %d\n", res.StatusCode)
+	log.Printf("Posting result [%d] to: %s\n", res.StatusCode, callbackURL)
 }
 
 func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string) {
@@ -211,9 +227,10 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 		log.Println("Error posting report", err)
 		return
 	}
+
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
-	log.Printf("Posting report - %d\n", res.StatusCode)
 
+	log.Printf("Posting report to gateway: %d\n", res.StatusCode)
 }
