@@ -1,5 +1,5 @@
 FROM golang:1.7.5 as golang
-WORKDIR /go/src/github.com/alexellis/faas/queue-worker
+WORKDIR /go/src/github.com/openfaas/faas/queue-worker
 
 COPY vendor     vendor
 COPY main.go  .
@@ -14,6 +14,6 @@ EXPOSE 8080
 ENV http_proxy      ""
 ENV https_proxy     ""
 
-COPY --from=golang /go/src/github.com/alexellis/faas/queue-worker/app    .
+COPY --from=golang /go/src/github.com/openfaas/faas/queue-worker/app    .
 
 CMD ["./app"]
