@@ -92,7 +92,7 @@ func main() {
 		fmt.Printf("Request for %s.\n", req.Function)
 		urlFunction := fmt.Sprintf("http://%s%s:8080/", req.Function, functionSuffix)
 
-		request, err := http.NewRequest("POST", urlFunction, bytes.NewReader(req.Body))
+		request, err := http.NewRequest(req.Method, urlFunction, bytes.NewReader(req.Body))
 		defer request.Body.Close()
 
 		res, err := client.Do(request)
