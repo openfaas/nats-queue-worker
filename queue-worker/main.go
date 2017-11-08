@@ -90,10 +90,14 @@ func main() {
 		req := queue.Request{}
 		json.Unmarshal(msg.Data, &req)
 		fmt.Printf("Request for %s.\n", req.Function)
-		urlFunction := fmt.Sprintf("http://%s%s:8080/", req.Function, functionSuffix)
+		functionURL := fmt.Sprintf("http://%s%s:8080/?%s", req.Function, functionSuffix, req.QueryString)
 
-		request, err := http.NewRequest("POST", urlFunction, bytes.NewReader(req.Body))
+		request, err := http.NewRequest("POST", functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
+
+		for k, v := range req.Header {
+			request.Header[k] = v
+		}
 
 		res, err := client.Do(request)
 		var status int
