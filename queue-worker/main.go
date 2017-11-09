@@ -94,7 +94,7 @@ func main() {
 
 		queryString := ""
 		if len(req.QueryString) > 0 {
-			queryString = fmt.Sprintf("?%s", strings.TrimLeft("?", req.QueryString))
+			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
 		}
 
 		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, functionSuffix, queryString)
