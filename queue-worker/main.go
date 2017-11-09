@@ -92,7 +92,7 @@ func main() {
 		fmt.Printf("Request for %s.\n", req.Function)
 		functionURL := fmt.Sprintf("http://%s%s:8080/?%s", req.Function, functionSuffix, req.QueryString)
 
-		request, err := http.NewRequest("POST", functionURL, bytes.NewReader(req.Body))
+		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
 
 		for k, v := range req.Header {
@@ -179,7 +179,7 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 		reader = bytes.NewReader(result)
 	}
 
-	request, err := http.NewRequest("POST", req.CallbackURL.String(), reader)
+	request, err := http.NewRequest(http.MethodPost, req.CallbackURL.String(), reader)
 	res, err := client.Do(request)
 
 	if err != nil {
@@ -206,7 +206,7 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	}
 
 	reqBytes, _ := json.Marshal(req)
-	request, err := http.NewRequest("POST", "http://"+gatewayAddress+":8080/system/async-report", bytes.NewReader(reqBytes))
+	request, err := http.NewRequest(http.MethodPost, "http://"+gatewayAddress+":8080/system/async-report", bytes.NewReader(reqBytes))
 	defer request.Body.Close()
 
 	res, err := client.Do(request)
