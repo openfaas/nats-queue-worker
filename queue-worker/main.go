@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"net/http"
@@ -90,7 +91,13 @@ func main() {
 		req := queue.Request{}
 		json.Unmarshal(msg.Data, &req)
 		fmt.Printf("Request for %s.\n", req.Function)
-		functionURL := fmt.Sprintf("http://%s%s:8080/?%s", req.Function, functionSuffix, req.QueryString)
+
+		queryString := ""
+		if len(req.QueryString) > 0 {
+			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
+		}
+
+		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, functionSuffix, queryString)
 
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
