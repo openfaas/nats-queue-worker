@@ -84,7 +84,9 @@ func main() {
 	i := 0
 	mcb := func(msg *stan.Msg) {
 		i++
+
 		printMsg(msg, i)
+		defer msg.Ack()
 
 		started := time.Now()
 
