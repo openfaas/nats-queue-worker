@@ -35,7 +35,7 @@ func makeClient() http.Client {
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   3 * time.Second,
+				Timeout:   30 * time.Second,
 				KeepAlive: 0,
 			}).DialContext,
 			MaxIdleConns:          1,
@@ -74,6 +74,11 @@ func main() {
 	var qgroup string
 	var unsubscribe bool
 
+	var earlyAck bool
+	if ack, exists := os.LookupEnv("early_ack"); exists {
+		earlyAck = (ack == "1" || ack == "true")
+	}
+
 	client := makeClient()
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
 	if err != nil {
@@ -84,12 +89,23 @@ func main() {
 	i := 0
 	mcb := func(msg *stan.Msg) {
 		i++
+
 		printMsg(msg, i)
+		if earlyAck {
+			msg.Ack()
+		} else {
+			defer msg.Ack()
+		}
 
 		started := time.Now()
 
 		req := queue.Request{}
-		json.Unmarshal(msg.Data, &req)
+		unmarshalErr := json.Unmarshal(msg.Data, &req)
+		if unmarshalErr != nil {
+			log.Printf("Unmarshal error: %s with data %s", unmarshalErr, msg.Data)
+			return
+		}
+
 		fmt.Printf("Request for %s.\n", req.Function)
 
 		queryString := ""
@@ -118,10 +134,21 @@ func main() {
 
 			if req.CallbackURL != nil {
 				log.Printf("Callback to: %s\n", req.CallbackURL.String())
-				postResult(&client, req, functionResult, status)
+
+				resultStatusCode, resultErr := postResult(&client, req, functionResult, status)
+				if resultErr != nil {
+					log.Println(resultErr)
+				} else {
+					log.Printf("Posted result: %d", resultStatusCode)
+				}
 			}
 
-			postReport(&client, req.Function, status, timeTaken, gatewayAddress)
+			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, gatewayAddress)
+			if reportErr != nil {
+				log.Println(reportErr)
+			} else {
+				log.Printf("Posting report - %d\n", statusCode)
+			}
 			return
 		}
 
@@ -136,18 +163,28 @@ func main() {
 			}
 			fmt.Println(string(functionResult))
 		}
+
 		timeTaken := time.Since(started).Seconds()
-		if err != nil {
-			fmt.Println(err)
-		}
+
 		fmt.Println(res.Status)
 
 		if req.CallbackURL != nil {
 			log.Printf("Callback to: %s\n", req.CallbackURL.String())
-			postResult(&client, req, functionResult, res.StatusCode)
+			resultStatusCode, resultErr := postResult(&client, req, functionResult, res.StatusCode)
+			if resultErr != nil {
+				log.Println(resultErr)
+			} else {
+				log.Printf("Posted result: %d", resultStatusCode)
+			}
 		}
 
-		postReport(&client, req.Function, res.StatusCode, timeTaken, gatewayAddress)
+		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, gatewayAddress)
+
+		if reportErr != nil {
+			log.Println(reportErr)
+		} else {
+			log.Printf("Posting report - %d\n", statusCode)
+		}
 	}
 
 	subj := "faas-request"
@@ -179,7 +216,7 @@ func main() {
 	<-cleanupDone
 }
 
-func postResult(client *http.Client, req queue.Request, result []byte, statusCode int) {
+func postResult(client *http.Client, req queue.Request, result []byte, statusCode int) (int, error) {
 	var reader io.Reader
 
 	if result != nil {
@@ -190,8 +227,7 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 	res, err := client.Do(request)
 
 	if err != nil {
-		log.Printf("Error posting result to URL %s %s\n", req.CallbackURL.String(), err.Error())
-		return
+		return http.StatusBadGateway, fmt.Errorf("error posting result to URL %s %s", req.CallbackURL.String(), err.Error())
 	}
 
 	if request.Body != nil {
@@ -201,30 +237,30 @@ func postResult(client *http.Client, req queue.Request, result []byte, statusCod
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
-
-	log.Printf("Posting result - %d\n", res.StatusCode)
+	return res.StatusCode, nil
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string) {
+func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string) (int, error) {
 	req := AsyncReport{
 		FunctionName: function,
 		StatusCode:   statusCode,
 		TimeTaken:    timeTaken,
 	}
 
+	targetPostback := "http://" + gatewayAddress + ":8080/system/async-report"
 	reqBytes, _ := json.Marshal(req)
-	request, err := http.NewRequest(http.MethodPost, "http://"+gatewayAddress+":8080/system/async-report", bytes.NewReader(reqBytes))
+	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
 	defer request.Body.Close()
 
 	res, err := client.Do(request)
 
 	if err != nil {
-		log.Println("Error posting report", err)
-		return
+		return http.StatusGatewayTimeout, fmt.Errorf("cannot post report to %s: %s", targetPostback, err)
 	}
+
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
-	log.Printf("Posting report - %d\n", res.StatusCode)
 
+	return res.StatusCode, nil
 }
