@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,11 +80,6 @@ func main() {
 	var qgroup string
 	var unsubscribe bool
 
-	var earlyAck bool
-	if ack, exists := os.LookupEnv("early_ack"); exists {
-		earlyAck = (ack == "1" || ack == "true")
-	}
-
 	client := makeClient()
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
 	if err != nil {
@@ -91,16 +87,12 @@ func main() {
 	}
 
 	startOpt := stan.StartWithLastReceived()
+
 	i := 0
 	mcb := func(msg *stan.Msg) {
 		i++
 
 		printMsg(msg, i)
-		if earlyAck {
-			msg.Ack()
-		} else {
-			defer msg.Ack()
-		}
 
 		started := time.Now()
 
@@ -198,7 +190,29 @@ func main() {
 	subj := "faas-request"
 	qgroup = "faas"
 
-	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable))
+	ackWait := time.Second * 30
+	maxInflight := 1
+
+	if value, exists := os.LookupEnv("max_inflight"); exists {
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			log.Println("max_inflight error:", err)
+		} else {
+			maxInflight = val
+		}
+	}
+
+	if val, exists := os.LookupEnv("ack_wait"); exists {
+		ackWaitVal, durationErr := time.ParseDuration(val)
+		if durationErr != nil {
+			log.Println("ack_wait error:", durationErr)
+		} else {
+			ackWait = ackWaitVal
+		}
+	}
+
+	log.Println("Wait for ", ackWait)
+	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
 	if err != nil {
 		log.Panicln(err)
 	}
