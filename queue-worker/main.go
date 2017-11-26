@@ -57,6 +57,7 @@ func main() {
 	natsAddress := "nats"
 	gatewayAddress := "gateway"
 	functionSuffix := ""
+	var debugPrintBody bool
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
 		natsAddress = val
@@ -68,6 +69,10 @@ func main() {
 
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		functionSuffix = val
+	}
+
+	if val, exists := os.LookupEnv("faas_print_body"); exists {
+		debugPrintBody = val == "1" || val == "true"
 	}
 
 	var durable string
@@ -107,6 +112,9 @@ func main() {
 		}
 
 		fmt.Printf("Request for %s.\n", req.Function)
+		if debugPrintBody {
+			fmt.Println(string(req.Body))
+		}
 
 		queryString := ""
 		if len(req.QueryString) > 0 {
