@@ -1,0 +1,3 @@
+[[constraint]]
+  name = "github.com/openfaas/faas"
+  version = "0.6.16"
