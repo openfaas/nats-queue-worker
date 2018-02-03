@@ -7,8 +7,12 @@ COPY main.go  .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
 FROM alpine:3.6
-RUN apk add --no-cache ca-certificates
-WORKDIR /root/
+
+RUN addgroup -S app \
+  && adduser -S -g app app \
+  && apk add --no-cache ca-certificates
+
+WORKDIR /home/app
 
 EXPOSE 8080
 ENV http_proxy      ""
@@ -16,4 +20,7 @@ ENV https_proxy     ""
 
 COPY --from=golang /go/src/github.com/openfaas/nats-queue-worker/app    .
 
+RUN chown -R app:app ./
+
+USER app
 CMD ["./app"]
