@@ -16,6 +16,7 @@ import (
 
 	"net/http"
 
+	"github.com/nats-io/go-nats"
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas/gateway/queue"
 )
@@ -210,9 +211,28 @@ func main() {
 			ackWait = ackWaitVal
 		}
 	}
+	var reconnectHandler nats.ConnHandler
+	var sub stan.Subscription
 
+	reconnectHandler = func(nc *nats.Conn) {
+		nc.Close()
+		sc, err = stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
+		if err != nil {
+			log.Fatalf("Can't connect: %v\n", err)
+		}
+		sc.NatsConn().SetReconnectHandler(reconnectHandler)
+		log.Println("Wait for ", ackWait)
+		sub, err = sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		log.Printf("Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n", subj, clientID, qgroup, durable)
+	}
+
+	sc.NatsConn().SetReconnectHandler(reconnectHandler)
 	log.Println("Wait for ", ackWait)
-	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
+	sub, err = sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
 	if err != nil {
 		log.Panicln(err)
 	}

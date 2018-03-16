@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/nats-io/go-nats"
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas/gateway/queue"
 )
@@ -27,6 +28,7 @@ func CreateNatsQueue(address string, port int) (*NatsQueue, error) {
 	clusterID := "faas-cluster"
 
 	nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
+	nc.NatsConn().SetReconnectHandler(queue1.reconnectClient(clientID, clusterID, natsURL))
 	queue1.nc = nc
 
 	return &queue1, err
@@ -46,4 +48,17 @@ func (q *NatsQueue) Queue(req *queue.Request) error {
 	err = q.nc.Publish("faas-request", out)
 
 	return err
+}
+
+func (q *NatsQueue) reconnectClient(clientID, clusterID, natsURL string) nats.ConnHandler {
+	return func(c *nats.Conn) {
+		c.Close()
+		nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
+		if err != nil {
+			log.Printf("Failed to reconnect to NATS stream\n%v", err)
+			return
+		}
+		nc.NatsConn().SetReconnectHandler(q.reconnectClient(clientID, clusterID, natsURL))
+		q.nc = nc
+	}
 }
