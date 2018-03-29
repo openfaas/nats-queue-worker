@@ -28,6 +28,8 @@ type AsyncReport struct {
 	TimeTaken    float64 `json:"timeTaken"`
 }
 
+var natsConn *nats.Conn
+
 func printMsg(m *stan.Msg, i int) {
 	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
 }
@@ -80,11 +82,17 @@ func main() {
 	var durable string
 	var qgroup string
 	var unsubscribe bool
+	var err error
 
 	client := makeClient()
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
+	natsConn, err = nats.Connect("nats://" + natsAddress + ":4222")
 	if err != nil {
-		log.Fatalf("Can't connect: %v\n", err)
+		log.Fatalf("Can't connect to NATS: %v\n", err)
+	}
+
+	sc, err := stan.Connect(clusterID, clientID, stan.NatsConn(natsConn))
+	if err != nil {
+		log.Fatalf("Can't connect to NATS Stream: %v\n", err)
 	}
 
 	startOpt := stan.StartWithLastReceived()
@@ -215,12 +223,14 @@ func main() {
 	var sub stan.Subscription
 
 	reconnectHandler = func(nc *nats.Conn) {
-		nc.Close()
-		sc, err = stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
+		sc.Close()
+		nc.SetReconnectHandler(reconnectHandler)
+		natsConn = nc
+
+		sc, err = stan.Connect(clusterID, clientID, stan.NatsConn(nc))
 		if err != nil {
 			log.Fatalf("Can't connect: %v\n", err)
 		}
-		sc.NatsConn().SetReconnectHandler(reconnectHandler)
 		log.Println("Wait for ", ackWait)
 		sub, err = sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
 		if err != nil {
@@ -230,7 +240,7 @@ func main() {
 		log.Printf("Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n", subj, clientID, qgroup, durable)
 	}
 
-	sc.NatsConn().SetReconnectHandler(reconnectHandler)
+	natsConn.SetReconnectHandler(reconnectHandler)
 	log.Println("Wait for ", ackWait)
 	sub, err = sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
 	if err != nil {
@@ -252,6 +262,7 @@ func main() {
 				sub.Unsubscribe()
 			}
 			sc.Close()
+			natsConn.Close()
 			cleanupDone <- true
 		}
 	}()

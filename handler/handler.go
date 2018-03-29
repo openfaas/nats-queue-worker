@@ -16,6 +16,8 @@ type NatsQueue struct {
 	nc stan.Conn
 }
 
+var natsConn *nats.Conn
+
 // CreateNatsQueue ready for asynchronous processing
 func CreateNatsQueue(address string, port int) (*NatsQueue, error) {
 	queue1 := NatsQueue{}
@@ -27,8 +29,15 @@ func CreateNatsQueue(address string, port int) (*NatsQueue, error) {
 	clientID := "faas-publisher-" + val
 	clusterID := "faas-cluster"
 
-	nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
-	nc.NatsConn().SetReconnectHandler(queue1.reconnectClient(clientID, clusterID, natsURL))
+	natsConn, err = nats.Connect(natsURL, nats.ReconnectHandler(queue1.reconnectClient(clientID, clusterID, natsURL)))
+	if err != nil {
+		return nil, err
+	}
+
+	nc, err := stan.Connect(clusterID, clientID, stan.NatsConn(natsConn))
+	if err != nil {
+		return nil, err
+	}
 	queue1.nc = nc
 
 	return &queue1, err
@@ -52,13 +61,13 @@ func (q *NatsQueue) Queue(req *queue.Request) error {
 
 func (q *NatsQueue) reconnectClient(clientID, clusterID, natsURL string) nats.ConnHandler {
 	return func(c *nats.Conn) {
-		c.Close()
-		nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
+		q.nc.Close()
+		c.SetReconnectHandler(q.reconnectClient(clientID, clusterID, natsURL))
+		nc, err := stan.Connect(clusterID, clientID, stan.NatsConn(c))
 		if err != nil {
 			log.Printf("Failed to reconnect to NATS stream\n%v", err)
 			return
 		}
-		nc.NatsConn().SetReconnectHandler(q.reconnectClient(clientID, clusterID, natsURL))
 		q.nc = nc
 	}
 }
