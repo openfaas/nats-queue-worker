@@ -28,8 +28,6 @@ type AsyncReport struct {
 	TimeTaken    float64 `json:"timeTaken"`
 }
 
-var natsConn *nats.Conn
-
 func printMsg(m *stan.Msg, i int) {
 	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
 }
@@ -85,15 +83,6 @@ func main() {
 	var err error
 
 	client := makeClient()
-	natsConn, err = nats.Connect("nats://" + natsAddress + ":4222")
-	if err != nil {
-		log.Fatalf("Can't connect to NATS: %v\n", err)
-	}
-
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsConn(natsConn))
-	if err != nil {
-		log.Fatalf("Can't connect to NATS Stream: %v\n", err)
-	}
 
 	startOpt := stan.StartWithLastReceived()
 
@@ -221,11 +210,9 @@ func main() {
 	}
 	var reconnectHandler nats.ConnHandler
 	var sub stan.Subscription
-
+	var sc stan.Conn
 	reconnectHandler = func(nc *nats.Conn) {
 		sc.Close()
-		nc.SetReconnectHandler(reconnectHandler)
-		natsConn = nc
 
 		sc, err = stan.Connect(clusterID, clientID, stan.NatsConn(nc))
 		if err != nil {
@@ -240,7 +227,16 @@ func main() {
 		log.Printf("Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n", subj, clientID, qgroup, durable)
 	}
 
-	natsConn.SetReconnectHandler(reconnectHandler)
+	natsConn, err := nats.Connect("nats://"+natsAddress+":4222", nats.ReconnectHandler(reconnectHandler))
+	if err != nil {
+		log.Fatalf("Can't connect to NATS: %v\n", err)
+	}
+
+	sc, err = stan.Connect(clusterID, clientID, stan.NatsConn(natsConn))
+	if err != nil {
+		log.Fatalf("Can't connect to NATS Stream: %v\n", err)
+	}
+
 	log.Println("Wait for ", ackWait)
 	sub, err = sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
 	if err != nil {
