@@ -213,7 +213,7 @@ func main() {
 	var sc stan.Conn
 	reconnectHandler = func(nc *nats.Conn) {
 		sc.Close()
-
+		log.Println("NATS Reconnect detected, rejoining NATS Stream...\n")
 		sc, err = stan.Connect(clusterID, clientID, stan.NatsConn(nc))
 		if err != nil {
 			log.Fatalf("Can't connect: %v\n", err)
