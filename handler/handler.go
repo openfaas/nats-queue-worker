@@ -13,7 +13,8 @@ import (
 
 // NatsQueue queue for work
 type NatsQueue struct {
-	nc stan.Conn
+	nc       stan.Conn
+	natsConn *nats.Conn
 }
 
 // CreateNatsQueue ready for asynchronous processing
@@ -37,6 +38,7 @@ func CreateNatsQueue(address string, port int) (*NatsQueue, error) {
 		return nil, err
 	}
 	queue1.nc = nc
+	queue1.natsConn = natsConn
 
 	return &queue1, err
 }
@@ -66,5 +68,6 @@ func (q *NatsQueue) reconnectClient(clientID, clusterID, natsURL string) nats.Co
 			return
 		}
 		q.nc = nc
+		q.natsConn = c
 	}
 }
