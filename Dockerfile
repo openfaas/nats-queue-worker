@@ -2,8 +2,10 @@ FROM golang:1.9.7-alpine as golang
 WORKDIR /go/src/github.com/openfaas/nats-queue-worker
 
 COPY vendor     vendor
+COPY handler    handler
 COPY main.go  .
 
+RUN go test -v ./handler/
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
 FROM alpine:3.7
