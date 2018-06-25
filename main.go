@@ -18,6 +18,7 @@ import (
 
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas/gateway/queue"
+	"context"
 )
 
 // AsyncReport is the report from a function executed on a queue worker.
@@ -59,6 +60,7 @@ func main() {
 	gatewayAddress := "gateway"
 	functionSuffix := ""
 	var debugPrintBody bool
+	var timeout = -1
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
 		natsAddress = val
@@ -74,6 +76,15 @@ func main() {
 
 	if val, exists := os.LookupEnv("faas_print_body"); exists {
 		debugPrintBody = val == "1" || val == "true"
+	}
+
+	if val, exists := os.LookupEnv("func_timeout"); exists {
+		value, err := strconv.Atoi(val)
+		if err != nil {
+			log.Println("timeout value error:", err)
+		} else {
+			timeout = value
+		}
 	}
 
 	var durable string
@@ -121,18 +132,50 @@ func main() {
 
 		copyHeaders(request.Header, &req.Header)
 
-		res, err := client.Do(request)
-		var status int
+		var res *http.Response = nil
 		var functionResult []byte
 
-		if err != nil {
-			status = http.StatusServiceUnavailable
+		if timeout > 0 {
+			ctx, cancel := context.WithCancel(context.TODO())
+			timer := time.AfterFunc(time.Duration(timeout) *time.Second, func() {
+				log.Println(fmt.Sprintf("Request would be cancelled due to %d seconds timeout" , timeout))
+				cancel()
+			})
+			request = request.WithContext(ctx)
+			res, err = client.Do(request)
+			timer.Stop()
 
+			if ctx.Err() == context.Canceled {
+				err = context.Canceled
+			}
+
+		} else {
+			res, err = client.Do(request)
+		}
+
+		if err != nil {
 			log.Println(err)
 			timeTaken := time.Since(started).Seconds()
 
+			var jsonResponse = ""
+			var status int
+
+			if err == context.Canceled {
+				status = http.StatusRequestTimeout
+			} else {
+				status = http.StatusServiceUnavailable
+			}
+
+			jsonResponse = fmt.Sprintf(`{"status_code": %d, "content": "%s", "url": "%s"}`, status, err.Error(), functionURL)
+			functionResult = []byte(jsonResponse)
+
+			if res == nil {
+				res = & http.Response{Header: make(http.Header, 0)}
+			}
+			copyHeaders(res.Header, &req.Header)
+
 			if req.CallbackURL != nil {
-				log.Printf("Callback to: %s\n", req.CallbackURL.String())
+				log.Printf("Callback to: %s with response %s\n", req.CallbackURL.String(), jsonResponse)
 
 				resultStatusCode, resultErr := postResult(&client, res, functionResult, req.CallbackURL.String())
 				if resultErr != nil {
@@ -168,7 +211,7 @@ func main() {
 		fmt.Println(res.Status)
 
 		if req.CallbackURL != nil {
-			log.Printf("Callback to: %s\n", req.CallbackURL.String())
+			log.Printf("Callback to: %s with response %s\n", req.CallbackURL.String(), functionResult)
 			resultStatusCode, resultErr := postResult(&client, res, functionResult, req.CallbackURL.String())
 			if resultErr != nil {
 				log.Println(resultErr)
