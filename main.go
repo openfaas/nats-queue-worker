@@ -246,7 +246,9 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 
 	request, err := http.NewRequest(http.MethodPost, callbackURL, reader)
 
-	copyHeaders(request.Header, &functionRes.Header)
+	if functionRes != nil {
+		copyHeaders(request.Header, &functionRes.Header)
+	}
 
 	res, err := client.Do(request)
 
