@@ -134,6 +134,14 @@ func main() {
 			if req.CallbackURL != nil {
 				log.Printf("Callback to: %s\n", req.CallbackURL.String())
 
+				jsonResponse := fmt.Sprintf(`{"status_code": %d, "content": "%s", "url": "%s"}`, status, err.Error(), functionURL)
+				functionResult = []byte(jsonResponse)
+
+				if res == nil {
+					res = & http.Response{Header: make(http.Header, 0)}
+					copyHeaders(res.Header, &req.Header)
+				}
+
 				resultStatusCode, resultErr := postResult(&client, res, functionResult, req.CallbackURL.String())
 				if resultErr != nil {
 					log.Println(resultErr)
