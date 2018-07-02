@@ -49,39 +49,21 @@ func makeClient() http.Client {
 }
 
 func main() {
+	readConfig := ReadConfig{}
+	config := readConfig.Read()
+
 	log.SetFlags(0)
 
 	clusterID := "faas-cluster"
 	val, _ := os.Hostname()
 	clientID := "faas-worker-" + val
 
-	natsAddress := "nats"
-	gatewayAddress := "gateway"
-	functionSuffix := ""
-	var debugPrintBody bool
-
-	if val, exists := os.LookupEnv("faas_nats_address"); exists {
-		natsAddress = val
-	}
-
-	if val, exists := os.LookupEnv("faas_gateway_address"); exists {
-		gatewayAddress = val
-	}
-
-	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
-		functionSuffix = val
-	}
-
-	if val, exists := os.LookupEnv("faas_print_body"); exists {
-		debugPrintBody = val == "1" || val == "true"
-	}
-
 	var durable string
 	var qgroup string
 	var unsubscribe bool
 
 	client := makeClient()
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+natsAddress+":4222"))
+	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+config.NatsAddress+":4222"))
 	if err != nil {
 		log.Fatalf("Can't connect: %v\n", err)
 	}
@@ -105,7 +87,8 @@ func main() {
 		}
 
 		fmt.Printf("Request for %s.\n", req.Function)
-		if debugPrintBody {
+
+		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
 		}
 
@@ -114,7 +97,7 @@ func main() {
 			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
 		}
 
-		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, functionSuffix, queryString)
+		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, config.FunctionSuffix, queryString)
 
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
@@ -142,7 +125,7 @@ func main() {
 				}
 			}
 
-			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, gatewayAddress)
+			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress)
 			if reportErr != nil {
 				log.Println(reportErr)
 			} else {
@@ -160,7 +143,12 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Println(string(functionResult))
+
+			if config.WriteDebug {
+				fmt.Println(string(functionResult))
+			} else {
+				fmt.Printf("Wrote %d Bytes\n", len(string(functionResult)))
+			}
 		}
 
 		timeTaken := time.Since(started).Seconds()
@@ -177,7 +165,7 @@ func main() {
 			}
 		}
 
-		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, gatewayAddress)
+		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress)
 
 		if reportErr != nil {
 			log.Println(reportErr)
