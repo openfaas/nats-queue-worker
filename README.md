@@ -1,5 +1,7 @@
 ## Queue worker for OpenFaaS - NATS Streaming
 
+[![Build Status](https://travis-ci.org/openfaas/nats-queue-worker.svg?branch=master)](https://travis-ci.org/openfaas/nats-queue-worker)
+
 This is a queue-worker to enable asynchronous processing of function requests. 
 
 > Note: A Kafka queue-worker is under-way through a PR on the main OpenFaaS repository.
