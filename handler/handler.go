@@ -4,35 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas/gateway/queue"
-	"regexp"
 )
 
 // NatsQueue queue for work
 type NatsQueue struct {
-	nc stan.Conn
-}
-
-type NatsConfig interface {
-	GetClientID() string
-}
-
-type DefaultNatsConfig struct {
-}
-
-var supportedCharacters, _ = regexp.Compile("[^a-zA-Z0-9-_]+")
-
-func (DefaultNatsConfig) GetClientID() string {
-	val, _ := os.Hostname()
-	return getClientId(val)
+	nc        stan.Conn
+	ClientID  string
+	ClusterID string
+	NATSURL   string
+	Topic     string
 }
 
 // CreateNatsQueue ready for asynchronous processing
 func CreateNatsQueue(address string, port int, clientConfig NatsConfig) (*NatsQueue, error) {
-	queue1 := NatsQueue{}
 	var err error
 	natsURL := fmt.Sprintf("nats://%s:%d", address, port)
 	log.Printf("Opening connection to %s\n", natsURL)
@@ -41,7 +28,13 @@ func CreateNatsQueue(address string, port int, clientConfig NatsConfig) (*NatsQu
 	clusterID := "faas-cluster"
 
 	nc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
-	queue1.nc = nc
+	queue1 := NatsQueue{
+		nc:        nc,
+		ClientID:  clientID,
+		ClusterID: clusterID,
+		NATSURL:   natsURL,
+		Topic:     "faas-request",
+	}
 
 	return &queue1, err
 }
@@ -57,11 +50,7 @@ func (q *NatsQueue) Queue(req *queue.Request) error {
 		log.Println(err)
 	}
 
-	err = q.nc.Publish("faas-request", out)
+	err = q.nc.Publish(q.Topic, out)
 
 	return err
-}
-
-func getClientId(hostname string) string {
-	return "faas-publisher-" + supportedCharacters.ReplaceAllString(hostname, "_")
 }

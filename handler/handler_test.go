@@ -12,28 +12,27 @@ func Test_GetClientID_ContainsHostname(t *testing.T) {
 	val := c.GetClientID()
 
 	hostname, _ := os.Hostname()
-	if !strings.HasSuffix(val, hostname) {
+	encodedHostname := supportedCharacters.ReplaceAllString(hostname, "_")
+	if !strings.HasSuffix(val, encodedHostname) {
 		t.Errorf("GetClientID should contain hostname as suffix, got: %s", val)
 		t.Fail()
 	}
 }
 
-func TestCreateClientId(t *testing.T) {
-	clientId := getClientId("computer-a")
-	expected := "faas-publisher-computer-a"
-	if clientId != expected {
-		t.Logf("Expected client id `%s` actual `%s`\n", expected, clientId)
+func TestCreategetClientID(t *testing.T) {
+	clientID := getClientID("computer-a")
+	want := "faas-publisher-computer-a"
+	if clientID != want {
+		t.Logf("Want clientID: `%s`, but got: `%s`\n", want, clientID)
 		t.Fail()
 	}
 }
 
-func TestCreateClientIdWhenHostHasUnsupportedCharacters(t *testing.T) {
-	clientId := getClientId("computer-a.acme.com")
-	expected := "faas-publisher-computer-a_acme_com"
-	if clientId != expected {
-		t.Logf("Expected client id `%s` actual `%s`\n", expected, clientId)
+func TestCreategetClientIDWhenHostHasUnsupportedCharacters(t *testing.T) {
+	clientID := getClientID("computer-a.acme.com")
+	want := "faas-publisher-computer-a_acme_com"
+	if clientID != want {
+		t.Logf("Want clientID: `%s`, but got: `%s`\n", want, clientID)
 		t.Fail()
 	}
 }
-
-
