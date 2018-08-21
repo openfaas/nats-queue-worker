@@ -7,3 +7,7 @@ push:
 	docker push openfaas/queue-worker:$(TAG)
 
 all: build
+
+ci-armhf:
+	(./build.sh $(TAG)-armhf)
+
