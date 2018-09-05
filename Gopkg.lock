@@ -38,13 +38,16 @@
 
 [[projects]]
   name = "github.com/openfaas/faas"
-  packages = ["gateway/queue"]
+  packages = [
+    "gateway/queue",
+    "gateway/types"
+  ]
   revision = "81334141832d6c4fc9b78e6b5e17e5330eca7606"
   version = "0.8.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb873f03ba109e6e479b9133d610f50d7fd6cbcdc0fe7dcf947ae70a1eade465"
+  inputs-digest = "ff0f31248e1b0df226bb0235d8d91b068dbefbc732e1f66612bf968b04979e69"
   solver-name = "gps-cdcl"
   solver-version = 1

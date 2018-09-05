@@ -6,6 +6,7 @@ COPY handler    handler
 COPY main.go  .
 COPY readconfig.go .
 COPY readconfig_test.go .
+COPY auth.go .
 
 RUN go test -v ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
