@@ -277,6 +277,12 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	targetPostback := "http://" + gatewayAddress + ":8080/system/async-report"
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
+
+	err = AddBasicAuth(request)
+	if err != nil {
+		log.Printf("Error with AddBasicAuth : %s", err.Error())
+	}
+
 	defer request.Body.Close()
 
 	res, err := client.Do(request)
