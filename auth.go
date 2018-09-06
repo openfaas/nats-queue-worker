@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/openfaas/faas/gateway/types"
+	"github.com/openfaas/faas-provider/auth"
 )
 
 //AddBasicAuth to a request by reading secrets
 func AddBasicAuth(req *http.Request) error {
-	reader := types.ReadBasicAuthFromDisk{}
+	reader := auth.ReadBasicAuthFromDisk{}
 
 	if len(os.Getenv("secret_mount_path")) > 0 {
 		reader.SecretMountPath = os.Getenv("secret_mount_path")
