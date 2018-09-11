@@ -104,7 +104,6 @@ func main() {
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
 
-		request.Host = req.Host
 		copyHeaders(request.Header, &req.Header)
 
 		res, err := client.Do(request)
