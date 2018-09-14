@@ -76,4 +76,21 @@ func Test_ReadConfig(t *testing.T) {
 		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
 		t.Fail()
 	}
+
+	os.Setenv("max_inflight", "10.00")
+	os.Setenv("ack_wait", "10")
+
+	config = readConfig.Read()
+
+	expectedMaxInflight = 1
+	if config.maxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+		t.Fail()
+	}
+
+	expectedAckWait = time.Second * 30
+	if config.ackWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
+		t.Fail()
+	}
 }
