@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
+	"strconv"
+	"time"
 )
 
 // ReadConfig constitutes config from env variables
@@ -9,7 +12,10 @@ type ReadConfig struct {
 }
 
 func (ReadConfig) Read() QueueWorkerConfig {
-	cfg := QueueWorkerConfig{}
+	cfg := QueueWorkerConfig{
+		ackWait:     time.Second * 30,
+		maxInflight: 1,
+	}
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
 		cfg.NatsAddress = val
@@ -43,6 +49,24 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		}
 	}
 
+	if value, exists := os.LookupEnv("max_inflight"); exists {
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			log.Println("max_inflight error:", err)
+		} else {
+			cfg.maxInflight = val
+		}
+	}
+
+	if val, exists := os.LookupEnv("ack_wait"); exists {
+		ackWaitVal, durationErr := time.ParseDuration(val)
+		if durationErr != nil {
+			log.Println("ack_wait error:", durationErr)
+		} else {
+			cfg.ackWait = ackWaitVal
+		}
+	}
+
 	return cfg
 }
 
@@ -52,4 +76,6 @@ type QueueWorkerConfig struct {
 	FunctionSuffix string
 	DebugPrintBody bool
 	WriteDebug     bool
+	maxInflight    int
+	ackWait        time.Duration
 }
