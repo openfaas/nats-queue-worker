@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func Test_ReadConfig(t *testing.T) {
@@ -14,6 +15,8 @@ func Test_ReadConfig(t *testing.T) {
 	os.Setenv("faas_function_suffix", "test_suffix")
 	os.Setenv("faas_print_body", "true")
 	os.Setenv("write_debug", "true")
+	os.Setenv("max_inflight", "10")
+	os.Setenv("ack_wait", "10ms")
 
 	config := readConfig.Read()
 
@@ -42,6 +45,35 @@ func Test_ReadConfig(t *testing.T) {
 
 	if config.WriteDebug != true {
 		t.Logf("Expected WriteDebug `%v` actual `%v`\n", true, config.WriteDebug)
+		t.Fail()
+	}
+
+	expectedMaxInflight := 10
+	if config.maxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+		t.Fail()
+	}
+
+	expectedAckWait := time.Millisecond * 10
+	if config.ackWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
+		t.Fail()
+	}
+
+	os.Unsetenv("max_inflight")
+	os.Unsetenv("ack_wait")
+
+	config = readConfig.Read()
+
+	expectedMaxInflight = 1
+	if config.maxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+		t.Fail()
+	}
+
+	expectedAckWait = time.Second * 30
+	if config.ackWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
 		t.Fail()
 	}
 }

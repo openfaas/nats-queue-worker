@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"time"
 
@@ -200,29 +199,8 @@ func main() {
 	subj := "faas-request"
 	qgroup = "faas"
 
-	ackWait := time.Second * 30
-	maxInflight := 1
-
-	if value, exists := os.LookupEnv("max_inflight"); exists {
-		val, err := strconv.Atoi(value)
-		if err != nil {
-			log.Println("max_inflight error:", err)
-		} else {
-			maxInflight = val
-		}
-	}
-
-	if val, exists := os.LookupEnv("ack_wait"); exists {
-		ackWaitVal, durationErr := time.ParseDuration(val)
-		if durationErr != nil {
-			log.Println("ack_wait error:", durationErr)
-		} else {
-			ackWait = ackWaitVal
-		}
-	}
-
-	log.Println("Wait for ", ackWait)
-	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(maxInflight), stan.AckWait(ackWait))
+	log.Println("Wait for ", config.ackWait)
+	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(config.maxInflight), stan.AckWait(config.ackWait))
 	if err != nil {
 		log.Panicln(err)
 	}
