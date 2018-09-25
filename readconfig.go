@@ -13,8 +13,8 @@ type ReadConfig struct {
 
 func (ReadConfig) Read() QueueWorkerConfig {
 	cfg := QueueWorkerConfig{
-		ackWait:     time.Second * 30,
-		maxInflight: 1,
+		AckWait:     time.Second * 30,
+		MaxInflight: 1,
 	}
 
 	if val, exists := os.LookupEnv("faas_nats_address"); exists {
@@ -54,7 +54,7 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		if err != nil {
 			log.Println("max_inflight error:", err)
 		} else {
-			cfg.maxInflight = val
+			cfg.MaxInflight = val
 		}
 	}
 
@@ -63,7 +63,7 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		if durationErr != nil {
 			log.Println("ack_wait error:", durationErr)
 		} else {
-			cfg.ackWait = ackWaitVal
+			cfg.AckWait = ackWaitVal
 		}
 	}
 
@@ -76,6 +76,6 @@ type QueueWorkerConfig struct {
 	FunctionSuffix string
 	DebugPrintBody bool
 	WriteDebug     bool
-	maxInflight    int
-	ackWait        time.Duration
+	MaxInflight    int
+	AckWait        time.Duration
 }

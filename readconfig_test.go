@@ -49,14 +49,14 @@ func Test_ReadConfig(t *testing.T) {
 	}
 
 	expectedMaxInflight := 10
-	if config.maxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+	if config.MaxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	expectedAckWait := time.Millisecond * 10
-	if config.ackWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
+	if config.AckWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -66,14 +66,14 @@ func Test_ReadConfig(t *testing.T) {
 	config = readConfig.Read()
 
 	expectedMaxInflight = 1
-	if config.maxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+	if config.MaxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	expectedAckWait = time.Second * 30
-	if config.ackWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
+	if config.AckWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -83,14 +83,14 @@ func Test_ReadConfig(t *testing.T) {
 	config = readConfig.Read()
 
 	expectedMaxInflight = 1
-	if config.maxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.maxInflight)
+	if config.MaxInflight != expectedMaxInflight {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	expectedAckWait = time.Second * 30
-	if config.ackWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.ackWait)
+	if config.AckWait != expectedAckWait {
+		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
 		t.Fail()
 	}
 }
