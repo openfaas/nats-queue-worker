@@ -178,8 +178,8 @@ func main() {
 	subj := "faas-request"
 	qgroup = "faas"
 
-	log.Println("Wait for ", config.ackWait)
-	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(config.maxInflight), stan.AckWait(config.ackWait))
+	log.Println("Wait for ", config.AckWait)
+	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(config.MaxInflight), stan.AckWait(config.AckWait))
 	if err != nil {
 		log.Panicln(err)
 	}
