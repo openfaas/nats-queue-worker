@@ -90,7 +90,7 @@ func Test_ReadConfig(t *testing.T) {
 
 	expectedAckWait = time.Second * 30
 	if config.AckWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
+		t.Logf("Expected ackWait `%v` actual `%v`\n", expectedAckWait, config.AckWait)
 		t.Fail()
 	}
 }
