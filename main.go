@@ -17,6 +17,7 @@ import (
 	"net/http"
 
 	"github.com/nats-io/go-nats-streaming"
+	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
 )
 
@@ -61,6 +62,16 @@ func main() {
 	var durable string
 	var qgroup string
 	var unsubscribe bool
+	var credentials *auth.BasicAuthCredentials
+	var err error
+
+	if os.Getenv("basic_auth") == "true" {
+		log.Printf("Loading basic authentication credentials")
+		credentials, err = LoadCredentials()
+		if err != nil {
+			log.Printf("Error with LoadCredentials: %s ", err.Error())
+		}
+	}
 
 	client := makeClient()
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+config.NatsAddress+":4222"))
@@ -127,7 +138,7 @@ func main() {
 				}
 			}
 
-			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress)
+			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, credentials)
 			if reportErr != nil {
 				log.Println(reportErr)
 			} else {
@@ -167,7 +178,7 @@ func main() {
 			}
 		}
 
-		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress)
+		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, credentials)
 
 		if reportErr != nil {
 			log.Println(reportErr)
@@ -266,7 +277,7 @@ func copyHeaders(destination http.Header, source *http.Header) {
 	}
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string) (int, error) {
+func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string, credentials *auth.BasicAuthCredentials) (int, error) {
 	req := AsyncReport{
 		FunctionName: function,
 		StatusCode:   statusCode,
@@ -277,9 +288,8 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
 
-	err = AddBasicAuth(request)
-	if err != nil {
-		log.Printf("Error with AddBasicAuth : %s", err.Error())
+	if os.Getenv("basic_auth") == "true" && credentials != nil {
+		request.SetBasicAuth(credentials.User, credentials.Password)
 	}
 
 	defer request.Body.Close()
