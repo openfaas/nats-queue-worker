@@ -130,7 +130,12 @@ func main() {
 			if req.CallbackURL != nil {
 				log.Printf("Callback to: %s\n", req.CallbackURL.String())
 
-				resultStatusCode, resultErr := postResult(&client, res, functionResult, req.CallbackURL.String(), xCallID)
+				resultStatusCode, resultErr := postResult(&client,
+					res,
+					functionResult,
+					req.CallbackURL.String(),
+					xCallID,
+					status)
 				if resultErr != nil {
 					log.Println(resultErr)
 				} else {
@@ -170,7 +175,12 @@ func main() {
 
 		if req.CallbackURL != nil {
 			log.Printf("Callback to: %s\n", req.CallbackURL.String())
-			resultStatusCode, resultErr := postResult(&client, res, functionResult, req.CallbackURL.String(), xCallID)
+			resultStatusCode, resultErr := postResult(&client,
+				res,
+				functionResult,
+				req.CallbackURL.String(),
+				xCallID,
+				res.StatusCode)
 			if resultErr != nil {
 				log.Println(resultErr)
 			} else {
@@ -238,7 +248,7 @@ func main() {
 	<-cleanupDone
 }
 
-func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string) (int, error) {
+func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int) (int, error) {
 	var reader io.Reader
 
 	if result != nil {
@@ -247,7 +257,11 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 
 	request, err := http.NewRequest(http.MethodPost, callbackURL, reader)
 
-	copyHeaders(request.Header, &functionRes.Header)
+	if functionRes != nil {
+		copyHeaders(request.Header, &functionRes.Header)
+	}
+
+	request.Header.Set("X-Function-Status", fmt.Sprintf("%d", statusCode))
 
 	if len(xCallID) > 0 {
 		request.Header.Set("X-Call-Id", xCallID)
