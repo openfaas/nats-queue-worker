@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/openfaas/nats-queue-worker/nats"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ func Test_GetClientID_ContainsHostname(t *testing.T) {
 	val := c.GetClientID()
 
 	hostname, _ := os.Hostname()
-	encodedHostname := supportedCharacters.ReplaceAllString(hostname, "_")
+	encodedHostname := nats.GetClientID(hostname)
 	if !strings.HasSuffix(val, encodedHostname) {
 		t.Errorf("GetClientID should contain hostname as suffix, got: %s", val)
 		t.Fail()

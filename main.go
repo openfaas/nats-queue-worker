@@ -18,6 +18,7 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
+	"github.com/openfaas/nats-queue-worker/nats"
 )
 
 // AsyncReport is the report from a function executed on a queue worker.
@@ -51,12 +52,11 @@ func makeClient() http.Client {
 func main() {
 	readConfig := ReadConfig{}
 	config := readConfig.Read()
-
 	log.SetFlags(0)
 
 	clusterID := "faas-cluster"
 	val, _ := os.Hostname()
-	clientID := "faas-worker-" + val
+	clientID := "faas-worker-" + nats.GetClientID(val)
 
 	var durable string
 	var qgroup string
@@ -75,7 +75,7 @@ func main() {
 	client := makeClient()
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+config.NatsAddress+":4222"))
 	if err != nil {
-		log.Fatalf("Can't connect: %v\n", err)
+		log.Fatalf("Can't connect to %s: %v\n", "nats://"+config.NatsAddress+":4222", err)
 	}
 
 	startOpt := stan.StartWithLastReceived()

@@ -2,7 +2,8 @@ package handler
 
 import (
 	"os"
-	"regexp"
+
+	"github.com/openfaas/nats-queue-worker/nats"
 )
 
 type NatsConfig interface {
@@ -12,8 +13,6 @@ type NatsConfig interface {
 type DefaultNatsConfig struct {
 }
 
-var supportedCharacters, _ = regexp.Compile("[^a-zA-Z0-9-_]+")
-
 // GetClientID returns the ClientID assigned to this producer/consumer.
 func (DefaultNatsConfig) GetClientID() string {
 	val, _ := os.Hostname()
@@ -21,5 +20,5 @@ func (DefaultNatsConfig) GetClientID() string {
 }
 
 func getClientID(hostname string) string {
-	return "faas-publisher-" + supportedCharacters.ReplaceAllString(hostname, "_")
+	return "faas-publisher-" + nats.GetClientID(hostname)
 }
