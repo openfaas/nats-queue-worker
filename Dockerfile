@@ -3,6 +3,7 @@ WORKDIR /go/src/github.com/openfaas/nats-queue-worker
 
 COPY vendor     vendor
 COPY handler    handler
+COPY nats       nats
 COPY main.go  .
 COPY readconfig.go .
 COPY readconfig_test.go .
