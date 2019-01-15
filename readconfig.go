@@ -58,6 +58,26 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		}
 	}
 
+	if value, exists := os.LookupEnv("faas_max_reconnect"); exists {
+		val, err := strconv.Atoi(value)
+
+		if err != nil {
+			log.Println("converting faas_max_reconnect to int error:", err)
+		} else {
+			cfg.MaxReconnect = val
+		}
+	}
+
+	if value, exists := os.LookupEnv("faas_reconnect_delay"); exists {
+		reconnectDelayVal, durationErr := time.ParseDuration(value)
+
+		if durationErr != nil {
+			log.Println("parse env var: faas_reconnect_delay as time.Duration error:", durationErr)
+		} else {
+			cfg.ReconnectDelay = reconnectDelayVal
+		}
+	}
+
 	if val, exists := os.LookupEnv("ack_wait"); exists {
 		ackWaitVal, durationErr := time.ParseDuration(val)
 		if durationErr != nil {
@@ -78,4 +98,6 @@ type QueueWorkerConfig struct {
 	WriteDebug     bool
 	MaxInflight    int
 	AckWait        time.Duration
+	MaxReconnect   int
+	ReconnectDelay time.Duration
 }
