@@ -67,12 +67,17 @@ func main() {
 			fmt.Println(string(req.Body))
 		}
 
+		path := "/"
+		if len(req.Path) > 0 {
+			path = req.Path
+		}
+
 		queryString := ""
 		if len(req.QueryString) > 0 {
 			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
 		}
 
-		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, config.FunctionSuffix, queryString)
+		functionURL := fmt.Sprintf("http://%s%s:8080%s%s", req.Function, config.FunctionSuffix, path, queryString)
 
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
