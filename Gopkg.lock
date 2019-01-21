@@ -2,55 +2,78 @@
 
 
 [[projects]]
+  digest = "1:8f13f978d35181fada0ea713c14a224f2b329fa91c13438b2811331ecd8b16e1"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
     "proto",
-    "protoc-gen-gogo/descriptor"
+    "protoc-gen-gogo/descriptor",
   ]
+  pruneopts = "UT"
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:6ec5ca70ff99467ff3b134ca05ae1d247e42a0377a7c27a756ba932f4dfc3a88"
   name = "github.com/nats-io/go-nats"
   packages = [
     ".",
     "encoders/builtin",
-    "util"
+    "util",
   ]
+  pruneopts = "UT"
   revision = "062418ea1c2181f52dc0f954f6204370519a868b"
   version = "v1.5.0"
 
 [[projects]]
+  digest = "1:cf80370e775e26aa54b8d87304244ad56e19886b422f4ede3bb4aec7ff3f83cc"
   name = "github.com/nats-io/go-nats-streaming"
   packages = [
     ".",
-    "pb"
+    "pb",
   ]
+  pruneopts = "UT"
   revision = "e15a53f85e4932540600a16b56f6c4f65f58176f"
   version = "v0.4.0"
 
 [[projects]]
+  digest = "1:c3cd663f2f30b92536b9f290ac85c6310dae36a14cb8961553ae9ccf0d85ae41"
   name = "github.com/nats-io/nuid"
   packages = ["."]
+  pruneopts = "UT"
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:db5343945177115247a0fefb937bb1600c997273a715dbfce6f5e1eb35c54a29"
   name = "github.com/openfaas/faas"
-  packages = ["gateway/queue"]
-  revision = "81334141832d6c4fc9b78e6b5e17e5330eca7606"
-  version = "0.8.2"
+  packages = [
+    "gateway/plugin",
+    "gateway/queue",
+    "gateway/requests",
+    "gateway/scaling",
+  ]
+  pruneopts = "UT"
+  revision = "9cea08c7288b88fdda2bb2c5bbfc3e42130250ce"
+  version = "0.9.9"
 
 [[projects]]
+  digest = "1:deb76da5396c9f641ddea9ca79e31a14bdb09c787cdfda90488768b7539b1fd6"
   name = "github.com/openfaas/faas-provider"
   packages = ["auth"]
-  revision = "9ce928bc82cbb2642e6d534f93a7904116179e6c"
-  version = "0.7.0"
+  pruneopts = "UT"
+  revision = "845bf7aa58cb08352c5b2501807837e464ab071d"
+  version = "0.7.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "03e6377fce2731a4a95085df0f6ef94aab5253e6a588fd20738e31bf727807e5"
+  input-imports = [
+    "github.com/nats-io/go-nats-streaming",
+    "github.com/openfaas/faas-provider/auth",
+    "github.com/openfaas/faas/gateway/plugin",
+    "github.com/openfaas/faas/gateway/queue",
+    "github.com/openfaas/faas/gateway/scaling",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

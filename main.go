@@ -14,39 +14,14 @@ import (
 	"time"
 
 	"net/http"
+	"net/url"
 
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas-provider/auth"
+	"github.com/openfaas/faas/gateway/plugin"
 	"github.com/openfaas/faas/gateway/queue"
+	"github.com/openfaas/faas/gateway/scaling"
 )
-
-// AsyncReport is the report from a function executed on a queue worker.
-type AsyncReport struct {
-	FunctionName string  `json:"name"`
-	StatusCode   int     `json:"statusCode"`
-	TimeTaken    float64 `json:"timeTaken"`
-}
-
-func printMsg(m *stan.Msg, i int) {
-	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
-}
-
-func makeClient() http.Client {
-	proxyClient := http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 0,
-			}).DialContext,
-			MaxIdleConns:          1,
-			DisableKeepAlives:     true,
-			IdleConnTimeout:       120 * time.Millisecond,
-			ExpectContinueTimeout: 1500 * time.Millisecond,
-		},
-	}
-	return proxyClient
-}
 
 func main() {
 	readConfig := ReadConfig{}
@@ -76,6 +51,35 @@ func main() {
 	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL("nats://"+config.NatsAddress+":4222"))
 	if err != nil {
 		log.Fatalf("Can't connect: %v\n", err)
+	}
+
+	gatewayURLVal := "http://gateway:8080/"
+
+	if env, ok := os.LookupEnv("gateway_url"); ok && len(env) > 0 {
+		gatewayURLVal = env
+	}
+
+	gatewayURL, urlErr := url.Parse(gatewayURLVal)
+	if urlErr != nil {
+		log.Printf("Bad URL: %s, error: %s", gatewayURLVal, urlErr)
+		os.Exit(1)
+	}
+
+	serviceQuery := plugin.NewExternalServiceQuery(*gatewayURL, credentials)
+
+	scalingConfig := scaling.ScalingConfig{
+		MaxPollCount:         uint(1000),
+		FunctionPollInterval: time.Millisecond * 10,
+		CacheExpiry:          time.Second * 5, // freshness of replica values before going stale
+		ServiceQuery:         serviceQuery,
+	}
+
+	fmt.Printf("Using function cache expiry %fs", scalingConfig.CacheExpiry.Seconds())
+
+	functionScaler := scaling.NewFunctionScaler(scalingConfig)
+
+	functionService := FunctionService{
+		FunctionScaler: &functionScaler,
 	}
 
 	startOpt := stan.StartWithLastReceived()
@@ -108,6 +112,13 @@ func main() {
 		if len(req.QueryString) > 0 {
 			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
 		}
+
+		scaleCode, scaleErr := functionService.Prepare(req.Function)
+		if scaleErr != nil {
+			log.Printf("%s", scaleErr.Error())
+		}
+
+		log.Printf("Scaled: %s - %d", req.Function, scaleCode)
 
 		functionURL := fmt.Sprintf("http://%s%s:8080/%s", req.Function, config.FunctionSuffix, queryString)
 
@@ -297,4 +308,48 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	}
 
 	return res.StatusCode, nil
+}
+
+type FunctionService struct {
+	FunctionScaler *scaling.FunctionScaler
+}
+
+func (f *FunctionService) Prepare(function string) (int, error) {
+
+	res := f.FunctionScaler.Scale(function)
+
+	if res.Error != nil {
+		return http.StatusInternalServerError, res.Error
+	}
+
+	if res.Found == false {
+		return http.StatusNotFound, fmt.Errorf("unable to find function: %s, error: %s", function, res.Error)
+	}
+
+	if res.Available == false {
+		return http.StatusServiceUnavailable, fmt.Errorf("unable to scale function: %s, error: %s", function, res.Error)
+	}
+
+	return http.StatusOK, nil
+}
+
+func printMsg(m *stan.Msg, i int) {
+	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
+}
+
+func makeClient() http.Client {
+	proxyClient := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 0,
+			}).DialContext,
+			MaxIdleConns:          1,
+			DisableKeepAlives:     true,
+			IdleConnTimeout:       120 * time.Millisecond,
+			ExpectContinueTimeout: 1500 * time.Millisecond,
+		},
+	}
+	return proxyClient
 }
