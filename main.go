@@ -8,12 +8,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
-
-	"net/http"
 
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas-provider/auth"
@@ -199,7 +198,7 @@ func main() {
 	subj := "faas-request"
 	qgroup = "faas"
 
-	log.Println("Wait for ", config.AckWait)
+	log.Printf("AckWait set to: %s", config.AckWait.String())
 	sub, err := sc.QueueSubscribe(subj, qgroup, mcb, startOpt, stan.DurableName(durable), stan.MaxInflight(config.MaxInflight), stan.AckWait(config.AckWait))
 	if err != nil {
 		log.Panicln(err)
