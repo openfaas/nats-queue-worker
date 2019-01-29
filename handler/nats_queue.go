@@ -11,8 +11,8 @@ import (
 	"github.com/openfaas/faas/gateway/queue"
 )
 
-// NatsQueue queue for work
-type NatsQueue struct {
+// NATSQueue queue for work
+type NATSQueue struct {
 	nc             stan.Conn
 	ncMutex        *sync.RWMutex
 	maxReconnect   int
@@ -32,7 +32,7 @@ type NatsQueue struct {
 }
 
 // Queue request for processing
-func (q *NatsQueue) Queue(req *queue.Request) error {
+func (q *NATSQueue) Queue(req *queue.Request) error {
 	fmt.Printf("NatsQueue - submitting request: %s.\n", req.Function)
 
 	out, err := json.Marshal(req)
@@ -47,7 +47,7 @@ func (q *NatsQueue) Queue(req *queue.Request) error {
 	return nc.Publish(q.Topic, out)
 }
 
-func (q *NatsQueue) connect() error {
+func (q *NATSQueue) connect() error {
 	nc, err := stan.Connect(
 		q.ClusterID,
 		q.ClientID,
@@ -70,18 +70,19 @@ func (q *NatsQueue) connect() error {
 	return nil
 }
 
-func (q *NatsQueue) reconnect() {
+func (q *NATSQueue) reconnect() {
 	for i := 0; i < q.maxReconnect; i++ {
 		time.Sleep(time.Second * time.Duration(i) * q.reconnectDelay)
 
 		if err := q.connect(); err == nil {
-			log.Printf("Reconnection (%d/%d) to %s succeeded\n", i+1, q.maxReconnect, q.NATSURL)
+			log.Printf("Reconnecting (%d/%d) to %s. OK\n", i+1, q.maxReconnect, q.NATSURL)
 
 			return
 		}
 
-		log.Printf("Reconnection (%d/%d) to %s failed\n", i+1, q.maxReconnect, q.NATSURL)
+		log.Printf("Reconnecting (%d/%d) to %s failed\n", i+1, q.maxReconnect, q.NATSURL)
 	}
 
-	log.Printf("Reconnection limit (%d) reached\n", q.maxReconnect)
+	log.Printf("Reached reconnection limit (%d) for %s\n", q.maxReconnect, q.NATSURL)
+
 }

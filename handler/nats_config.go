@@ -7,32 +7,32 @@ import (
 	"github.com/openfaas/nats-queue-worker/nats"
 )
 
-type NatsConfig interface {
+type NATSConfig interface {
 	GetClientID() string
 	GetMaxReconnect() int
 	GetReconnectDelay() time.Duration
 }
 
-type DefaultNatsConfig struct {
+type DefaultNATSConfig struct {
 	maxReconnect   int
 	reconnectDelay time.Duration
 }
 
-func NewDefaultNatsConfig(maxReconnect int, reconnectDelay time.Duration) DefaultNatsConfig {
-	return DefaultNatsConfig{maxReconnect, reconnectDelay}
+func NewDefaultNATSConfig(maxReconnect int, reconnectDelay time.Duration) DefaultNATSConfig {
+	return DefaultNATSConfig{maxReconnect, reconnectDelay}
 }
 
 // GetClientID returns the ClientID assigned to this producer/consumer.
-func (DefaultNatsConfig) GetClientID() string {
+func (DefaultNATSConfig) GetClientID() string {
 	val, _ := os.Hostname()
 	return getClientID(val)
 }
 
-func (c DefaultNatsConfig) GetMaxReconnect() int {
+func (c DefaultNATSConfig) GetMaxReconnect() int {
 	return c.maxReconnect
 }
 
-func (c DefaultNatsConfig) GetReconnectDelay() time.Duration {
+func (c DefaultNATSConfig) GetReconnectDelay() time.Duration {
 	return c.reconnectDelay
 }
 

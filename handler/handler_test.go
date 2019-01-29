@@ -1,14 +1,15 @@
 package handler
 
 import (
-	"github.com/openfaas/nats-queue-worker/nats"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/openfaas/nats-queue-worker/nats"
 )
 
 func Test_GetClientID_ContainsHostname(t *testing.T) {
-	c := DefaultNatsConfig{}
+	c := DefaultNATSConfig{}
 
 	val := c.GetClientID()
 
