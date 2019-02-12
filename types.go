@@ -40,9 +40,9 @@ type NATSQueue struct {
 
 // connect creates a subscription to NATS Streaming
 func (q *NATSQueue) connect() error {
-	log.Printf("Connecting to: %s\n", q.natsURL)
+	log.Printf("Connect: %s\n", q.natsURL)
 
-	sc, err := stan.Connect(
+	nc, err := stan.Connect(
 		q.clusterID,
 		q.clientID,
 		stan.NatsURL(q.natsURL),
@@ -59,7 +59,7 @@ func (q *NATSQueue) connect() error {
 	q.connMutex.Lock()
 	defer q.connMutex.Unlock()
 
-	q.conn = sc
+	q.conn = nc
 
 	log.Printf("Subscribing to: %s at %s\n", q.subject, q.natsURL)
 	log.Println("Wait for ", q.ackWait)
@@ -92,6 +92,8 @@ func (q *NATSQueue) connect() error {
 }
 
 func (q *NATSQueue) reconnect() {
+	log.Printf("Reconnect\n")
+
 	for i := 0; i < q.maxReconnect; i++ {
 		select {
 		case <-time.After(time.Duration(i) * q.reconnectDelay):
