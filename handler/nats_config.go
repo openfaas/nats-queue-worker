@@ -25,7 +25,7 @@ func NewDefaultNATSConfig(maxReconnect int, reconnectDelay time.Duration) Defaul
 // GetClientID returns the ClientID assigned to this producer/consumer.
 func (DefaultNATSConfig) GetClientID() string {
 	val, _ := os.Hostname()
-	return getClientID(val)
+	return "faas-publisher-" + nats.GetClientID(val)
 }
 
 func (c DefaultNATSConfig) GetMaxReconnect() int {
@@ -34,8 +34,4 @@ func (c DefaultNATSConfig) GetMaxReconnect() int {
 
 func (c DefaultNATSConfig) GetReconnectDelay() time.Duration {
 	return c.reconnectDelay
-}
-
-func getClientID(hostname string) string {
-	return "faas-publisher-" + nats.GetClientID(hostname)
 }
