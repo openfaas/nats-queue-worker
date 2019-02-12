@@ -180,7 +180,7 @@ func main() {
 		ackWait:        config.AckWait,
 	}
 
-	if initErr := natsQueue.init(); initErr != nil {
+	if initErr := natsQueue.connect(); initErr != nil {
 		log.Panic(initErr)
 	}
 
