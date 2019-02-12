@@ -15,159 +15,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nats-io/go-nats-streaming"
+	stan "github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
 	"github.com/openfaas/nats-queue-worker/nats"
 )
-
-// AsyncReport is the report from a function executed on a queue worker.
-type AsyncReport struct {
-	FunctionName string  `json:"name"`
-	StatusCode   int     `json:"statusCode"`
-	TimeTaken    float64 `json:"timeTaken"`
-}
-
-func printMsg(m *stan.Msg, i int) {
-	log.Printf("[#%d] Received on [%s]: '%s'\n", i, m.Subject, m)
-}
-
-func makeClient() http.Client {
-	proxyClient := http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 0,
-			}).DialContext,
-			MaxIdleConns:          1,
-			DisableKeepAlives:     true,
-			IdleConnTimeout:       120 * time.Millisecond,
-			ExpectContinueTimeout: 1500 * time.Millisecond,
-		},
-	}
-	return proxyClient
-}
-
-type NATSQueue struct {
-	clusterID string
-	clientID  string
-	natsURL   string
-
-	maxReconnect   int
-	reconnectDelay time.Duration
-	conn           stan.Conn
-	connMutex      *sync.RWMutex
-	quitCh         chan struct{}
-
-	subject        string
-	qgroup         string
-	durable        string
-	ackWait        time.Duration
-	messageHandler func(*stan.Msg)
-	startOption    stan.SubscriptionOption
-	maxInFlight    stan.SubscriptionOption
-	subscription   stan.Subscription
-}
-
-func (q *NATSQueue) init() error {
-	log.Printf("Connecting to: %s\n", q.natsURL)
-
-	sc, err := stan.Connect(
-		q.clusterID,
-		q.clientID,
-		stan.NatsURL(q.natsURL),
-		stan.SetConnectionLostHandler(func(conn stan.Conn, err error) {
-			log.Printf("Disconnected from %s\n", q.natsURL)
-
-			q.reconnect()
-		}),
-	)
-	if err != nil {
-		return fmt.Errorf("can't connect to %s: %v\n", q.natsURL, err)
-	}
-
-	q.connMutex.Lock()
-	defer q.connMutex.Unlock()
-
-	q.conn = sc
-
-	log.Printf("Subscribing to: %s at %s\n", q.subject, q.natsURL)
-	log.Println("Wait for ", q.ackWait)
-
-	subscription, err := q.conn.QueueSubscribe(
-		q.subject,
-		q.qgroup,
-		q.messageHandler,
-		stan.DurableName(q.durable),
-		stan.AckWait(q.ackWait),
-		q.startOption,
-		q.maxInFlight,
-	)
-	if err != nil {
-		return fmt.Errorf("couldn't subscribe to %s at %s. Error: %v\n", q.subject, q.natsURL, err)
-	}
-
-	log.Printf(
-		"Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n",
-		q.subject,
-		q.clientID,
-		q.qgroup,
-		q.durable,
-	)
-
-	q.subscription = subscription
-
-	return nil
-}
-
-func (q *NATSQueue) reconnect() {
-	for i := 0; i < q.maxReconnect; i++ {
-		select {
-		case <-time.After(time.Duration(i) * q.reconnectDelay):
-			if err := q.init(); err == nil {
-				log.Printf("Reconnecting (%d/%d) to %s succeeded\n", i+1, q.maxReconnect, q.natsURL)
-
-				return
-			}
-
-			nextTryIn := (time.Duration(i+1) * q.reconnectDelay).String()
-
-			log.Printf("Reconnecting (%d/%d) to %s failed\n", i+1, q.maxReconnect, q.natsURL)
-			log.Printf("Waiting %s before next try", nextTryIn)
-		case <-q.quitCh:
-			log.Println("Received signal to stop reconnecting...")
-
-			return
-		}
-	}
-
-	log.Printf("Reconnecting limit (%d) reached\n", q.maxReconnect)
-}
-
-func (q *NATSQueue) unsubscribe() error {
-	q.connMutex.Lock()
-	defer q.connMutex.Unlock()
-
-	if q.subscription != nil {
-		return fmt.Errorf("q.subscription is nil")
-	}
-
-	return q.subscription.Unsubscribe()
-}
-
-func (q *NATSQueue) closeConnection() error {
-	q.connMutex.Lock()
-	defer q.connMutex.Unlock()
-
-	if q.conn == nil {
-		return fmt.Errorf("q.conn is nil")
-	}
-
-	close(q.quitCh)
-
-	return q.conn.Close()
-}
 
 func main() {
 	readConfig := ReadConfig{}
@@ -195,7 +47,7 @@ func main() {
 	messageHandler := func(msg *stan.Msg) {
 		i++
 
-		printMsg(msg, i)
+		log.Printf("[#%d] Received on [%s]: '%s'\n", i, msg.Subject, msg)
 
 		started := time.Now()
 
@@ -309,8 +161,6 @@ func main() {
 
 	natsURL := "nats://" + config.NatsAddress + ":4222"
 
-	go nats.Init("http://" + config.NatsAddress + ":8222")
-
 	natsQueue := NATSQueue{
 		clusterID: "faas-cluster",
 		clientID:  "faas-worker-" + nats.GetClientID(hostname),
@@ -360,6 +210,25 @@ func main() {
 		}
 	}()
 	<-cleanupDone
+}
+
+// makeClient constructs a HTTP client with keep-alive turned
+// off and a dial-timeout of 30 seconds.
+func makeClient() http.Client {
+	proxyClient := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 0,
+			}).DialContext,
+			MaxIdleConns:          1,
+			DisableKeepAlives:     true,
+			IdleConnTimeout:       120 * time.Millisecond,
+			ExpectContinueTimeout: 1500 * time.Millisecond,
+		},
+	}
+	return proxyClient
 }
 
 func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int) (int, error) {
