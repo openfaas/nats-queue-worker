@@ -31,11 +31,13 @@ type NATSQueue struct {
 	subject        string
 	qgroup         string
 	durable        string
-	ackWait        time.Duration
 	messageHandler func(*stan.Msg)
-	startOption    stan.SubscriptionOption
-	maxInFlight    stan.SubscriptionOption
-	subscription   stan.Subscription
+
+	startOption stan.SubscriptionOption
+	ackWait     time.Duration
+	maxInFlight int
+
+	subscription stan.Subscription
 }
 
 // connect creates a subscription to NATS Streaming
@@ -51,7 +53,11 @@ func (q *NATSQueue) connect() error {
 
 			q.reconnect()
 		}),
+
+		stan.PubAckWait(q.ackWait),
+		stan.MaxPubAcksInflight(q.maxInFlight),
 	)
+
 	if err != nil {
 		return fmt.Errorf("can't connect to %s: %v", q.natsURL, err)
 	}
@@ -62,7 +68,6 @@ func (q *NATSQueue) connect() error {
 	q.conn = nc
 
 	log.Printf("Subscribing to: %s at %s\n", q.subject, q.natsURL)
-	log.Println("Wait for ", q.ackWait)
 
 	subscription, err := q.conn.QueueSubscribe(
 		q.subject,
@@ -71,7 +76,7 @@ func (q *NATSQueue) connect() error {
 		stan.DurableName(q.durable),
 		stan.AckWait(q.ackWait),
 		q.startOption,
-		q.maxInFlight,
+		stan.MaxInflight(q.maxInFlight),
 	)
 
 	if err != nil {

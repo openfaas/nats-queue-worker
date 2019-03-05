@@ -105,7 +105,13 @@ type QueueWorkerConfig struct {
 	FunctionSuffix string
 	DebugPrintBody bool
 	WriteDebug     bool
-	MaxInflight    int
+
+	// MaxInflight is the number of inflight messages for a given
+	// AckWait time-window
+	MaxInflight int
+
+	// AckWait is the grace period in which messages must be acknowledged or
+	// face being re-delivered.
 	AckWait        time.Duration
 	MaxReconnect   int
 	ReconnectDelay time.Duration

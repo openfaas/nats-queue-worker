@@ -181,9 +181,11 @@ func main() {
 		durable:        durable,
 		messageHandler: messageHandler,
 		startOption:    stan.StartWithLastReceived(),
-		maxInFlight:    stan.MaxInflight(config.MaxInflight),
+		maxInFlight:    config.MaxInflight,
 		ackWait:        config.AckWait,
 	}
+
+	log.Printf("[Parameters] AckWait: %s, MaxInflight: %d\n", config.AckWait, config.MaxInflight)
 
 	if initErr := natsQueue.connect(); initErr != nil {
 		log.Panic(initErr)
