@@ -44,3 +44,7 @@
 [[constraint]]
   name = "github.com/openfaas/faas-provider"
   version = "0.7.0"
+
+[[constraint]]
+  name = "github.com/go-fed/httpsig"
+  revision = "34143e88f29c29c3997bd8d02401fcea26b23d5f"

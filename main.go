@@ -15,9 +15,10 @@ import (
 	"sync"
 	"time"
 
-	stan "github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/go-nats-streaming"
 	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
+	httpSig "github.com/openfaas/nats-queue-worker/http"
 	"github.com/openfaas/nats-queue-worker/nats"
 )
 
@@ -35,7 +36,7 @@ func main() {
 
 	if os.Getenv("basic_auth") == "true" {
 		log.Printf("Loading basic authentication credentials")
-		credentials, err = LoadCredentials()
+		credentials, err = LoadCredentials(config.SecretMountPath)
 		if err != nil {
 			log.Printf("Error with LoadCredentials: %s ", err.Error())
 		}
@@ -44,6 +45,7 @@ func main() {
 	client := makeClient()
 
 	i := 0
+	signer := httpSig.New(config.SecretMountPath, config.WriteDebug)
 	messageHandler := func(msg *stan.Msg) {
 		i++
 
@@ -83,7 +85,6 @@ func main() {
 		defer request.Body.Close()
 
 		copyHeaders(request.Header, &req.Header)
-
 		res, err := client.Do(request)
 		var status int
 		var functionResult []byte
@@ -98,6 +99,7 @@ func main() {
 				log.Printf("Callback to: %s\n", req.CallbackURL.String())
 
 				resultStatusCode, resultErr := postResult(&client,
+					signer,
 					res,
 					functionResult,
 					req.CallbackURL.String(),
@@ -143,6 +145,7 @@ func main() {
 		if req.CallbackURL != nil {
 			log.Printf("Callback to: %s\n", req.CallbackURL.String())
 			resultStatusCode, resultErr := postResult(&client,
+				signer,
 				res,
 				functionResult,
 				req.CallbackURL.String(),
@@ -236,7 +239,7 @@ func makeClient() http.Client {
 	return proxyClient
 }
 
-func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int) (int, error) {
+func postResult(client *http.Client, signer *httpSig.Signatures, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int) (int, error) {
 	var reader io.Reader
 
 	if result != nil {
@@ -253,6 +256,10 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 
 	if len(xCallID) > 0 {
 		request.Header.Set("X-Call-Id", xCallID)
+	}
+
+	if err := signer.SignMessage(request); err != nil {
+		log.Printf("error signing callback message. %v\n", err)
 	}
 
 	res, err := client.Do(request)

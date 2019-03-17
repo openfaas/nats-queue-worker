@@ -2,55 +2,100 @@
 
 
 [[projects]]
+  digest = "1:cb4cccac911388b90d3e2b2b1aa5c3cd487b2ae2c6fa1acef0db7acd5a5747dd"
+  name = "github.com/go-fed/httpsig"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "34143e88f29c29c3997bd8d02401fcea26b23d5f"
+
+[[projects]]
+  digest = "1:8f13f978d35181fada0ea713c14a224f2b329fa91c13438b2811331ecd8b16e1"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
     "proto",
-    "protoc-gen-gogo/descriptor"
+    "protoc-gen-gogo/descriptor",
   ]
+  pruneopts = "UT"
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:6ec5ca70ff99467ff3b134ca05ae1d247e42a0377a7c27a756ba932f4dfc3a88"
   name = "github.com/nats-io/go-nats"
   packages = [
     ".",
     "encoders/builtin",
-    "util"
+    "util",
   ]
+  pruneopts = "UT"
   revision = "062418ea1c2181f52dc0f954f6204370519a868b"
   version = "v1.5.0"
 
 [[projects]]
+  digest = "1:cf80370e775e26aa54b8d87304244ad56e19886b422f4ede3bb4aec7ff3f83cc"
   name = "github.com/nats-io/go-nats-streaming"
   packages = [
     ".",
-    "pb"
+    "pb",
   ]
+  pruneopts = "UT"
   revision = "e15a53f85e4932540600a16b56f6c4f65f58176f"
   version = "v0.4.0"
 
 [[projects]]
+  digest = "1:c3cd663f2f30b92536b9f290ac85c6310dae36a14cb8961553ae9ccf0d85ae41"
   name = "github.com/nats-io/nuid"
   packages = ["."]
+  pruneopts = "UT"
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:340f4e2e095ead4e0a15b4646da3e4533f8b6520e3a382eaf586e8166f3bbcb5"
   name = "github.com/openfaas/faas"
   packages = ["gateway/queue"]
+  pruneopts = "UT"
   revision = "bfa869ec8c0c04c26c5b0ed434bc367e712dcaef"
   version = "0.10.2"
 
 [[projects]]
+  digest = "1:deb76da5396c9f641ddea9ca79e31a14bdb09c787cdfda90488768b7539b1fd6"
   name = "github.com/openfaas/faas-provider"
   packages = ["auth"]
+  pruneopts = "UT"
   revision = "9ce928bc82cbb2642e6d534f93a7904116179e6c"
   version = "0.7.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7648c3064dd3df1f59efc051196c2e01a202466e3edce60610792662247aa8ac"
+  name = "golang.org/x/crypto"
+  packages = [
+    "blake2b",
+    "blake2s",
+    "ripemd160",
+    "sha3",
+  ]
+  pruneopts = "UT"
+  revision = "ffb98f73852f696ea2bb21a617a5c4b3e067a439"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f3f79696c064bff17314b6180110357383f81d4d633c5e1ae2f7e0b461cbb779"
+  name = "golang.org/x/sys"
+  packages = ["cpu"]
+  pruneopts = "UT"
+  revision = "cd391775e71e684db52b63df9affd58269495083"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b568e20d336fb2625ad72caa1b479a46ed1362e320083720feabccd1abaedbee"
+  input-imports = [
+    "github.com/go-fed/httpsig",
+    "github.com/nats-io/go-nats-streaming",
+    "github.com/openfaas/faas-provider/auth",
+    "github.com/openfaas/faas/gateway/queue",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

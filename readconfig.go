@@ -96,6 +96,12 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		}
 	}
 
+	secretPath := os.Getenv("secret_mount_path")
+	if len(secretPath) == 0 {
+		secretPath = "/run/secrets/"
+	}
+	cfg.SecretMountPath = secretPath
+
 	return cfg
 }
 
@@ -109,4 +115,5 @@ type QueueWorkerConfig struct {
 	AckWait        time.Duration
 	MaxReconnect   int
 	ReconnectDelay time.Duration
+	SecretMountPath string
 }
