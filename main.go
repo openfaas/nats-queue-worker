@@ -33,7 +33,7 @@ func main() {
 	var credentials *auth.BasicAuthCredentials
 	var err error
 
-	if os.Getenv("basic_auth") == "true" {
+	if config.BasicAuth {
 		log.Printf("Loading basic authentication credentials")
 		credentials, err = LoadCredentials()
 		if err != nil {
@@ -61,7 +61,7 @@ func main() {
 
 		xCallID := req.Header.Get("X-Call-Id")
 
-		fmt.Printf("Request for %s.\n", req.Function)
+		fmt.Printf("Invoking: %s.\n", req.Function)
 
 		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
@@ -77,7 +77,21 @@ func main() {
 			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
 		}
 
-		functionURL := fmt.Sprintf("http://%s%s:8080%s%s", req.Function, config.FunctionSuffix, path, queryString)
+		functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
+			req.Function,
+			config.FunctionSuffix,
+			path,
+			queryString)
+
+		if config.GatewayInvoke {
+			functionURL = fmt.Sprintf("http://%s:8080/function/%s/%s%s",
+				config.GatewayAddress,
+				req.Function,
+				path,
+				queryString)
+		}
+
+		start := time.Now()
 
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		defer request.Body.Close()
@@ -87,6 +101,14 @@ func main() {
 		res, err := client.Do(request)
 		var status int
 		var functionResult []byte
+
+		statusCode := res.StatusCode
+		if err != nil {
+			statusCode = http.StatusServiceUnavailable
+		}
+
+		duration := time.Since(start)
+		log.Printf("Invoked: %s [%d] in %fs", req.Function, statusCode, duration.Seconds())
 
 		if err != nil {
 			status = http.StatusServiceUnavailable
@@ -110,13 +132,15 @@ func main() {
 				}
 			}
 
-			statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, credentials)
-			if reportErr != nil {
-				log.Println(reportErr)
-			} else {
-				log.Printf("Posting report - %d\n", statusCode)
+			if config.GatewayInvoke == false {
+				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, credentials)
+				if reportErr != nil {
+					log.Println(reportErr)
+				} else {
+					log.Printf("Posting report - %d\n", statusCode)
+				}
+				return
 			}
-			return
 		}
 
 		if res.Body != nil {
@@ -155,13 +179,16 @@ func main() {
 			}
 		}
 
-		statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, credentials)
+		if config.GatewayInvoke == false {
+			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, credentials)
 
-		if reportErr != nil {
-			log.Println(reportErr)
-		} else {
-			log.Printf("Posting report - %d\n", statusCode)
+			if reportErr != nil {
+				log.Println(reportErr)
+			} else {
+				log.Printf("Posting report - %d\n", statusCode)
+			}
 		}
+
 	}
 
 	natsURL := "nats://" + config.NatsAddress + ":4222"

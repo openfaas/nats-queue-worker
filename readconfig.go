@@ -96,6 +96,18 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		}
 	}
 
+	if val, exists := os.LookupEnv("gateway_invoke"); exists {
+		if val == "1" || val == "true" {
+			cfg.GatewayInvoke = true
+		}
+	}
+
+	if val, exists := os.LookupEnv("basic_auth"); exists {
+		if val == "1" || val == "true" {
+			cfg.BasicAuth = true
+		}
+	}
+
 	return cfg
 }
 
@@ -109,4 +121,6 @@ type QueueWorkerConfig struct {
 	AckWait        time.Duration
 	MaxReconnect   int
 	ReconnectDelay time.Duration
+	GatewayInvoke  bool // GatewayInvoke invoke functions through gateway rather than directly
+	BasicAuth      bool
 }
