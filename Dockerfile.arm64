@@ -3,16 +3,17 @@ WORKDIR /go/src/github.com/openfaas/nats-queue-worker
 
 COPY vendor     vendor
 COPY handler    handler
-COPY nats	nats
-COPY auth.go		.
+COPY nats       nats
+COPY main.go  .
 COPY types.go .
-COPY readconfig.go 	.
+COPY readconfig.go .
 COPY readconfig_test.go .
-COPY main.go  		.
+COPY auth.go .
+
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 RUN addgroup -S app \
   && adduser -S -g app app \

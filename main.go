@@ -61,7 +61,7 @@ func main() {
 
 		xCallID := req.Header.Get("X-Call-Id")
 
-		fmt.Printf("Invoking: %s.\n", req.Function)
+		fmt.Printf("Invoking: %s, %d bytes.\n", req.Function, len(req.Body))
 
 		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
@@ -92,13 +92,13 @@ func main() {
 		}
 
 		start := time.Now()
-
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
-		defer request.Body.Close()
 
 		copyHeaders(request.Header, &req.Header)
 
 		res, err := client.Do(request)
+		request.Body.Close()
+
 		var status int
 		var functionResult []byte
 
