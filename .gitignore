@@ -17,4 +17,4 @@
 
 nats-queue-worker
 queue-worker
-
+Dockerfile.local

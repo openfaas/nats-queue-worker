@@ -6,6 +6,56 @@ import (
 	"time"
 )
 
+func Test_ReadConfig_GatewayInvokeDefault(t *testing.T) {
+
+	readConfig := ReadConfig{}
+
+	os.Setenv("gateway_invoke", "")
+	cfg := readConfig.Read()
+
+	gatewayInvokeWant := false
+	if cfg.GatewayInvoke != gatewayInvokeWant {
+		t.Errorf("gatewayInvokeWant want %v, but got %v", gatewayInvokeWant, cfg.GatewayInvoke)
+	}
+}
+
+func Test_ReadConfig_GatewayInvokeSetToTrue(t *testing.T) {
+
+	readConfig := ReadConfig{}
+
+	os.Setenv("gateway_invoke", "true")
+	cfg := readConfig.Read()
+
+	gatewayInvokeWant := true
+	if cfg.GatewayInvoke != gatewayInvokeWant {
+		t.Errorf("gatewayInvokeWant want %v, but got %v", gatewayInvokeWant, cfg.GatewayInvoke)
+	}
+}
+
+func Test_ReadConfig_BasicAuthDefaultIsFalse(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("basic_auth", "")
+	cfg := readConfig.Read()
+
+	want := false
+	if cfg.BasicAuth != want {
+		t.Errorf("basicAuth want %v, but got %v", want, cfg.BasicAuth)
+	}
+}
+
+func Test_ReadConfig_BasicAuthSetToTrue(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("basic_auth", "true")
+	cfg := readConfig.Read()
+
+	want := true
+	if cfg.BasicAuth != want {
+		t.Errorf("basicAuth want %v, but got %v", want, cfg.BasicAuth)
+	}
+}
+
 func Test_ReadConfig(t *testing.T) {
 
 	readConfig := ReadConfig{}
