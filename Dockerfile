@@ -13,7 +13,7 @@ COPY auth.go .
 RUN go test -v ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 RUN addgroup -S app \
   && adduser -S -g app app \
