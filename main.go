@@ -84,9 +84,9 @@ func main() {
 			queryString)
 
 		if config.GatewayInvoke {
-			functionURL = fmt.Sprintf("http://%s:8080/function/%s/%s%s",
+			functionURL = fmt.Sprintf("http://%s:8080/function/%s%s%s",
 				config.GatewayAddress,
-				req.Function,
+				strings.Trim(req.Function, "/"),
 				path,
 				queryString)
 		}
