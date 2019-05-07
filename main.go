@@ -21,6 +21,32 @@ import (
 	"github.com/openfaas/nats-queue-worker/nats"
 )
 
+func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryString string) string {
+	qs := ""
+	if len(queryString) > 0 {
+		qs = fmt.Sprintf("?%s", strings.TrimLeft(queryString, "?"))
+	}
+	pathVal := "/"
+	if len(path) > 0 {
+		pathVal = path
+	}
+	functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
+		req.Function,
+		config.FunctionSuffix,
+		pathVal,
+		qs)
+
+	if config.GatewayInvoke {
+		functionURL = fmt.Sprintf("http://%s:8080/function/%s%s%s",
+			config.GatewayAddress,
+			strings.Trim(req.Function, "/"),
+			pathVal,
+			qs)
+	}
+
+	return functionURL
+}
+
 func main() {
 	readConfig := ReadConfig{}
 	config := readConfig.Read()
@@ -67,29 +93,7 @@ func main() {
 			fmt.Println(string(req.Body))
 		}
 
-		path := "/"
-		if len(req.Path) > 0 {
-			path = req.Path
-		}
-
-		queryString := ""
-		if len(req.QueryString) > 0 {
-			queryString = fmt.Sprintf("?%s", strings.TrimLeft(req.QueryString, "?"))
-		}
-
-		functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
-			req.Function,
-			config.FunctionSuffix,
-			path,
-			queryString)
-
-		if config.GatewayInvoke {
-			functionURL = fmt.Sprintf("http://%s:8080/function/%s%s%s",
-				config.GatewayAddress,
-				strings.Trim(req.Function, "/"),
-				path,
-				queryString)
-		}
+		functionURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
 
 		start := time.Now()
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
