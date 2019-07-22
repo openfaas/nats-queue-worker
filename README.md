@@ -6,7 +6,7 @@ This is a queue-worker to enable asynchronous processing of function requests.
 
 > Note: A Kafka queue-worker is under-way through a PR on the main OpenFaaS repository.
 
-* [Read more in the async guide](https://github.com/openfaas/faas/blob/master/guide/asynchronous.md)
+* [Read more in the async guide](https://docs.openfaas.com/reference/async/)
 
 Hub image: [openfaas/queue-worker](https://hub.docker.com/r/openfaas/queue-worker/)
 
