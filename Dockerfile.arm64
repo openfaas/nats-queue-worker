@@ -1,4 +1,6 @@
-FROM golang:1.10-alpine as golang
+FROM golang:1.11-alpine as golang
+ENV CGO_ENABLED=0
+
 WORKDIR /go/src/github.com/openfaas/nats-queue-worker
 
 COPY vendor     vendor
@@ -13,7 +15,7 @@ COPY auth.go .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
-FROM alpine:3.9
+FROM alpine:3.10
 
 RUN addgroup -S app \
   && adduser -S -g app app \
