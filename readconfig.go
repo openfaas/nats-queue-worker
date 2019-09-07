@@ -33,6 +33,12 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		cfg.GatewayAddress = "gateway"
 	}
 
+	if val, exists := os.LookupEnv("faas_gateway_port"); exists {
+		cfg.GatewayPort = val
+	} else {
+		cfg.GatewayPort = "8080"
+	}
+
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		cfg.FunctionSuffix = val
 	}
@@ -114,6 +120,7 @@ func (ReadConfig) Read() QueueWorkerConfig {
 type QueueWorkerConfig struct {
 	NatsAddress    string
 	GatewayAddress string
+	GatewayPort    string
 	FunctionSuffix string
 	DebugPrintBody bool
 	WriteDebug     bool

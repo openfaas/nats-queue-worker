@@ -62,6 +62,7 @@ func Test_ReadConfig(t *testing.T) {
 
 	os.Setenv("faas_nats_address", "test_nats")
 	os.Setenv("faas_gateway_address", "test_gatewayaddr")
+	os.Setenv("faas_gateway_port", "test_gatewayport")
 	os.Setenv("faas_function_suffix", "test_suffix")
 	os.Setenv("faas_print_body", "true")
 	os.Setenv("write_debug", "true")
@@ -79,6 +80,12 @@ func Test_ReadConfig(t *testing.T) {
 	expected = "test_gatewayaddr"
 	if config.GatewayAddress != expected {
 		t.Logf("Expected GatewayAddress `%s` actual `%s`\n", expected, config.GatewayAddress)
+		t.Fail()
+	}
+
+	expected = "test_gatewayport"
+	if config.GatewayPort != expected {
+		t.Logf("Expected GatewayPort `%s` actual `%s`\n", expected, config.GatewayPort)
 		t.Fail()
 	}
 
