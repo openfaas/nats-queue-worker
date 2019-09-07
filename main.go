@@ -37,7 +37,7 @@ func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryS
 		qs)
 
 	if config.GatewayInvoke {
-		functionURL = fmt.Sprintf("http://%s:8080/function/%s%s%s",
+		functionURL = fmt.Sprintf("http://%s/function/%s%s%s",
 			config.GatewayAddress,
 			strings.Trim(req.Function, "/"),
 			pathVal,
@@ -317,7 +317,7 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 		TimeTaken:    timeTaken,
 	}
 
-	targetPostback := "http://" + gatewayAddress + ":8080/system/async-report"
+	targetPostback := fmt.Sprintf("http://%s/system/async-report", gatewayAddress)
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
 

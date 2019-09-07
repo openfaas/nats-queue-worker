@@ -11,6 +11,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_IncludesGWAddress(t *testi
 		FunctionSuffix: "",
 		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
+		GatewayPort: "8080",
 	}
 	req := queue.Request{
 		Function: "function1",
@@ -29,6 +30,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithQS(t *testing.T) {
 		FunctionSuffix: "",
 		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
+		GatewayPort: "8080",
 	}
 	req := queue.Request{
 		Function:    "function1",
@@ -47,6 +49,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithPath(t *testing.T) {
 		FunctionSuffix: "",
 		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
+		GatewayPort: "8080",
 	}
 	req := queue.Request{
 		Function: "function1",
@@ -65,6 +68,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvokeOff_UsesDirectInvocation(t 
 		FunctionSuffix: ".openfaas-fn",
 		GatewayInvoke:  false,
 		GatewayAddress: "gateway",
+		GatewayPort: "8080",
 	}
 	req := queue.Request{
 		Function: "function1",
