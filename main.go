@@ -30,15 +30,17 @@ func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryS
 	if len(path) > 0 {
 		pathVal = path
 	}
-	functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
+	functionURL := fmt.Sprintf("http://%s%s:%s%s%s",
 		req.Function,
 		config.FunctionSuffix,
+		config.GatewayPort,
 		pathVal,
 		qs)
 
 	if config.GatewayInvoke {
-		functionURL = fmt.Sprintf("http://%s:8080/function/%s%s%s",
+		functionURL = fmt.Sprintf("http://%s:%s/function/%s%s%s",
 			config.GatewayAddress,
+			config.GatewayPort,
 			strings.Trim(req.Function, "/"),
 			pathVal,
 			qs)
@@ -137,7 +139,7 @@ func main() {
 			}
 
 			if config.GatewayInvoke == false {
-				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, credentials)
+				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, config.GatewayPort, credentials)
 				if reportErr != nil {
 					log.Println(reportErr)
 				} else {
@@ -184,7 +186,7 @@ func main() {
 		}
 
 		if config.GatewayInvoke == false {
-			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, credentials)
+			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, config.GatewayPort, credentials)
 
 			if reportErr != nil {
 				log.Println(reportErr)
@@ -310,14 +312,17 @@ func copyHeaders(destination http.Header, source *http.Header) {
 	}
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string, credentials *auth.BasicAuthCredentials) (int, error) {
+func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string, gatewayPort string, credentials *auth.BasicAuthCredentials) (int, error) {
 	req := AsyncReport{
 		FunctionName: function,
 		StatusCode:   statusCode,
 		TimeTaken:    timeTaken,
 	}
 
-	targetPostback := "http://" + gatewayAddress + ":8080/system/async-report"
+	targetPostback := fmt.Sprintf("http://%s:%s/system/async-report",
+		gatewayAddress,
+		gatewayPort,
+	)
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
 
