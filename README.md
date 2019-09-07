@@ -28,6 +28,7 @@ Screenshots from keynote / video - find out more over at https://www.openfaas.co
 | `basic_auth` | When `true` basic auth is used to post any function statistics back to the gateway | `false` |
 | `write_debug` | Print verbose logs | `false` |
 | `faas_gateway_address` | Address of gateway DNS name | `gateway` |
+| `faas_gateway_port` | Port of gateway service | `8080` |
 | `faas_function_suffix` | When `gateway_invoke` is `false`, this suffix is used to contact a function, it may correspond to a Kubernetes namespace  | `` |
 | `faas_max_reconnect` | An integer of the amount of reconnection attempts when the NATS connection is lost | `120` |
 | `faas_nats_address` | The DNS entry for NATS | `nats` |
