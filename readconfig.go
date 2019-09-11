@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -33,11 +34,18 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		cfg.GatewayAddress = "gateway"
 	}
 
-	if val, exists := os.LookupEnv("faas_gateway_port"); exists {
-		cfg.GatewayPort = val
+	if value, exists := os.LookupEnv("faas_gateway_port"); exists {
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			log.Println("converting faas_gateway_port to int error:", err)
+		} else {
+			cfg.GatewayPort = val
+		}
 	} else {
-		cfg.GatewayPort = "8080"
+		cfg.GatewayPort = 8080
 	}
+
+	cfg.GatewayAddress = fmt.Sprintf("%s:%d", cfg.GatewayAddress, cfg.GatewayPort)
 
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		cfg.FunctionSuffix = val
@@ -120,7 +128,7 @@ func (ReadConfig) Read() QueueWorkerConfig {
 type QueueWorkerConfig struct {
 	NatsAddress    string
 	GatewayAddress string
-	GatewayPort    string
+	GatewayPort    int
 	FunctionSuffix string
 	DebugPrintBody bool
 	WriteDebug     bool
