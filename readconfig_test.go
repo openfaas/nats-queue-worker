@@ -77,7 +77,7 @@ func Test_ReadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	expected = "test_gatewayaddr"
+	expected = "test_gatewayaddr:8080"
 	if config.GatewayAddress != expected {
 		t.Logf("Expected GatewayAddress `%s` actual `%s`\n", expected, config.GatewayAddress)
 		t.Fail()
