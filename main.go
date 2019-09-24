@@ -106,7 +106,7 @@ func main() {
 		var status int
 		var functionResult []byte
 
-		statusCode := res.StatusCode
+		var statusCode int
 		if err != nil {
 			statusCode = http.StatusServiceUnavailable
 		}
@@ -145,6 +145,8 @@ func main() {
 				}
 				return
 			}
+		} else {
+			statusCode = res.StatusCode
 		}
 
 		if res.Body != nil {
