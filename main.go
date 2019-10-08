@@ -30,10 +30,9 @@ func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryS
 	if len(path) > 0 {
 		pathVal = path
 	}
-	functionURL := fmt.Sprintf("http://%s%s:%d%s%s",
+	functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
 		req.Function,
 		config.FunctionSuffix,
-		config.GatewayPort,
 		pathVal,
 		qs)
 
