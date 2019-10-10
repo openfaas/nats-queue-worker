@@ -71,49 +71,49 @@ func Test_ReadConfig(t *testing.T) {
 
 	config := readConfig.Read()
 
-	expected := "test_nats"
-	if config.NatsAddress != expected {
-		t.Logf("Expected NatsAddress `%s` actual `%s`\n", expected, config.NatsAddress)
+	want := "test_nats"
+	if config.NatsAddress != want {
+		t.Logf("Want NatsAddress `%s` got `%s`\n", want, config.NatsAddress)
 		t.Fail()
 	}
 
-	expected = "test_gatewayaddr:8080"
-	if config.GatewayAddress != expected {
-		t.Logf("Expected GatewayAddress `%s` actual `%s`\n", expected, config.GatewayAddress)
+	want = "test_gatewayaddr:8080"
+	if config.GatewayAddress != want {
+		t.Logf("Want GatewayAddress `%s` got `%s`\n", want, config.GatewayAddress)
 		t.Fail()
 	}
 
-	expectedGatewayPort := 8080
-	if config.GatewayPort != expectedGatewayPort {
-		t.Logf("Expected GatewayPort `%d` actual `%d`\n", expectedGatewayPort, config.GatewayPort)
+	wantGatewayPort := 8080
+	if config.GatewayPort != wantGatewayPort {
+		t.Logf("Want GatewayPort `%d` got `%d`\n", wantGatewayPort, config.GatewayPort)
 		t.Fail()
 	}
 
-	expected = "test_suffix"
-	if config.FunctionSuffix != expected {
-		t.Logf("Expected FunctionSuffix `%s` actual `%s`\n", expected, config.FunctionSuffix)
+	want = "test_suffix"
+	if config.FunctionSuffix != want {
+		t.Logf("Want FunctionSuffix `%s` got `%s`\n", want, config.FunctionSuffix)
 		t.Fail()
 	}
 
 	if config.DebugPrintBody != true {
-		t.Logf("Expected DebugPrintBody `%v` actual `%v`\n", true, config.DebugPrintBody)
+		t.Logf("Want DebugPrintBody `%v` got `%v`\n", true, config.DebugPrintBody)
 		t.Fail()
 	}
 
 	if config.WriteDebug != true {
-		t.Logf("Expected WriteDebug `%v` actual `%v`\n", true, config.WriteDebug)
+		t.Logf("Want WriteDebug `%v` got `%v`\n", true, config.WriteDebug)
 		t.Fail()
 	}
 
-	expectedMaxInflight := 10
-	if config.MaxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
+	wantMaxInflight := 10
+	if config.MaxInflight != wantMaxInflight {
+		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
-	expectedAckWait := time.Millisecond * 10
-	if config.AckWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
+	wantAckWait := time.Millisecond * 10
+	if config.AckWait != wantAckWait {
+		t.Logf("Want maxInflight `%v` got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -122,15 +122,15 @@ func Test_ReadConfig(t *testing.T) {
 
 	config = readConfig.Read()
 
-	expectedMaxInflight = 1
-	if config.MaxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
+	wantMaxInflight = 1
+	if config.MaxInflight != wantMaxInflight {
+		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
-	expectedAckWait = time.Second * 30
-	if config.AckWait != expectedAckWait {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedAckWait, config.AckWait)
+	wantAckWait = time.Second * 30
+	if config.AckWait != wantAckWait {
+		t.Logf("Want maxInflight `%v` got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -139,15 +139,15 @@ func Test_ReadConfig(t *testing.T) {
 
 	config = readConfig.Read()
 
-	expectedMaxInflight = 1
-	if config.MaxInflight != expectedMaxInflight {
-		t.Logf("Expected maxInflight `%v` actual `%v`\n", expectedMaxInflight, config.MaxInflight)
+	wantMaxInflight = 1
+	if config.MaxInflight != wantMaxInflight {
+		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
-	expectedAckWait = time.Second * 30
-	if config.AckWait != expectedAckWait {
-		t.Logf("Expected ackWait `%v` actual `%v`\n", expectedAckWait, config.AckWait)
+	wantAckWait = time.Second * 30
+	if config.AckWait != wantAckWait {
+		t.Logf("Want ackWait `%v` got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 }
