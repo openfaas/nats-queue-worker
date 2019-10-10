@@ -15,7 +15,7 @@ func Test_ReadConfig_GatewayInvokeDefault(t *testing.T) {
 
 	gatewayInvokeWant := false
 	if cfg.GatewayInvoke != gatewayInvokeWant {
-		t.Errorf("gatewayInvokeWant want %v, but got %v", gatewayInvokeWant, cfg.GatewayInvoke)
+		t.Errorf("gatewayInvokeWant want %v, got %v", gatewayInvokeWant, cfg.GatewayInvoke)
 	}
 }
 
@@ -28,7 +28,7 @@ func Test_ReadConfig_GatewayInvokeSetToTrue(t *testing.T) {
 
 	gatewayInvokeWant := true
 	if cfg.GatewayInvoke != gatewayInvokeWant {
-		t.Errorf("gatewayInvokeWant want %v, but got %v", gatewayInvokeWant, cfg.GatewayInvoke)
+		t.Errorf("gatewayInvokeWant want %v, got %v", gatewayInvokeWant, cfg.GatewayInvoke)
 	}
 }
 
@@ -40,7 +40,7 @@ func Test_ReadConfig_BasicAuthDefaultIsFalse(t *testing.T) {
 
 	want := false
 	if cfg.BasicAuth != want {
-		t.Errorf("basicAuth want %v, but got %v", want, cfg.BasicAuth)
+		t.Errorf("basicAuth want %v, got %v", want, cfg.BasicAuth)
 	}
 }
 
@@ -52,7 +52,7 @@ func Test_ReadConfig_BasicAuthSetToTrue(t *testing.T) {
 
 	want := true
 	if cfg.BasicAuth != want {
-		t.Errorf("basicAuth want %v, but got %v", want, cfg.BasicAuth)
+		t.Errorf("basicAuth want %v, got %v", want, cfg.BasicAuth)
 	}
 }
 
@@ -73,47 +73,47 @@ func Test_ReadConfig(t *testing.T) {
 
 	want := "test_nats"
 	if config.NatsAddress != want {
-		t.Logf("Want NatsAddress `%s` got `%s`\n", want, config.NatsAddress)
+		t.Logf("NatsAddress want `%s`, got `%s`\n", want, config.NatsAddress)
 		t.Fail()
 	}
 
 	want = "test_gatewayaddr:8080"
 	if config.GatewayAddress != want {
-		t.Logf("Want GatewayAddress `%s` got `%s`\n", want, config.GatewayAddress)
+		t.Logf("GatewayAddress want `%s`, got `%s`\n", want, config.GatewayAddress)
 		t.Fail()
 	}
 
 	wantGatewayPort := 8080
 	if config.GatewayPort != wantGatewayPort {
-		t.Logf("Want GatewayPort `%d` got `%d`\n", wantGatewayPort, config.GatewayPort)
+		t.Logf("GatewayPort want `%d`, got `%d`\n", wantGatewayPort, config.GatewayPort)
 		t.Fail()
 	}
 
 	want = "test_suffix"
 	if config.FunctionSuffix != want {
-		t.Logf("Want FunctionSuffix `%s` got `%s`\n", want, config.FunctionSuffix)
+		t.Logf("FunctionSuffix want `%s`, got `%s`\n", want, config.FunctionSuffix)
 		t.Fail()
 	}
 
 	if config.DebugPrintBody != true {
-		t.Logf("Want DebugPrintBody `%v` got `%v`\n", true, config.DebugPrintBody)
+		t.Logf("DebugPrintBody want `%v`, got `%v`\n", true, config.DebugPrintBody)
 		t.Fail()
 	}
 
 	if config.WriteDebug != true {
-		t.Logf("Want WriteDebug `%v` got `%v`\n", true, config.WriteDebug)
+		t.Logf("WriteDebug want `%v`, got `%v`\n", true, config.WriteDebug)
 		t.Fail()
 	}
 
 	wantMaxInflight := 10
 	if config.MaxInflight != wantMaxInflight {
-		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
+		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	wantAckWait := time.Millisecond * 10
 	if config.AckWait != wantAckWait {
-		t.Logf("Want maxInflight `%v` got `%v`\n", wantAckWait, config.AckWait)
+		t.Logf("maxInflight want `%v`, got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -124,13 +124,13 @@ func Test_ReadConfig(t *testing.T) {
 
 	wantMaxInflight = 1
 	if config.MaxInflight != wantMaxInflight {
-		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
+		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	wantAckWait = time.Second * 30
 	if config.AckWait != wantAckWait {
-		t.Logf("Want maxInflight `%v` got `%v`\n", wantAckWait, config.AckWait)
+		t.Logf("maxInflight want `%v`, got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 
@@ -141,13 +141,13 @@ func Test_ReadConfig(t *testing.T) {
 
 	wantMaxInflight = 1
 	if config.MaxInflight != wantMaxInflight {
-		t.Logf("Want maxInflight `%v` got `%v`\n", wantMaxInflight, config.MaxInflight)
+		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
 		t.Fail()
 	}
 
 	wantAckWait = time.Second * 30
 	if config.AckWait != wantAckWait {
-		t.Logf("Want ackWait `%v` got `%v`\n", wantAckWait, config.AckWait)
+		t.Logf("ackWait want `%v`, got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
 	}
 }
