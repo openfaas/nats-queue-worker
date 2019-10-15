@@ -97,18 +97,20 @@ func main() {
 
 		start := time.Now()
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
-
+		defer request.Body.Close()
 		copyHeaders(request.Header, &req.Header)
 
 		res, err := client.Do(request)
-		request.Body.Close()
 
 		var status int
 		var functionResult []byte
 
-		statusCode := res.StatusCode
+		var statusCode int
 		if err != nil {
+
 			statusCode = http.StatusServiceUnavailable
+		} else {
+			statusCode = res.StatusCode
 		}
 
 		duration := time.Since(start)
