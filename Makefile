@@ -1,37 +1,49 @@
+DOCKER_REPOSITORY=openfaas/queue-worker
+BUILD_ARGS=--build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}"
+ARCHS=amd64 arm64 armhf ppc64le
 TAG?=latest
 
+# docker manifest command will work with Docker CLI 18.03 or newer
+# but for now it's still experimental feature so we need to enable that
+export DOCKER_CLI_EXPERIMENTAL=enabled
+
 .PHONY: build
-build:
-	docker build --build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}" -t openfaas/queue-worker:$(TAG) .
+build: $(addprefix build-,$(ARCHS))  ## Build Docker images for all architectures 
+
+.PHONY: build-%
+build-%:
+	docker build $(BUILD_ARGS) --build-arg go_opts="GOARCH=$*" -t $(DOCKER_REPOSITORY):$(TAG)-$* .
+
+build-armhf:
+	docker build $(BUILD_ARGS) --build-arg go_opts="GOARCH=arm GOARM=6" -t $(DOCKER_REPOSITORY):$(TAG)-armhf .
 
 .PHONY: push
-push:
-	docker push openfaas/queue-worker:$(TAG)
+push: $(addprefix push-,$(ARCHS)) ## Push Docker images for all architectures
 
-.PHONY: all
-all: build
+.PHONY: push-%
+push-%:
+	docker push $(DOCKER_REPOSITORY):$(TAG)-$* 
 
-.PHONY: ci-armhf-build
-ci-armhf-build:
-	docker build --build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}" -t openfaas/queue-worker:$(TAG)-armhf . -f Dockerfile.armhf
+.PHONY: manifest
+manifest: ## Create and push Docker manifest to combine all architectures in multi-arch Docker image
+	docker manifest create --amend $(DOCKER_REPOSITORY):$(TAG) $(addprefix $(DOCKER_REPOSITORY):$(TAG)-,$(ARCHS))
+	$(MAKE) $(addprefix manifest-annotate-,$(ARCHS))
+	docker manifest push $(DOCKER_REPOSITORY):$(TAG)
 
-.PHONY: ci-armhf-push
-ci-armhf-push:
-	docker push openfaas/queue-worker:$(TAG)-armhf
+.PHONY: manifest-annotate-%
+manifest-annotate-%:
+	docker manifest annotate $(DOCKER_REPOSITORY):$(TAG) $(DOCKER_REPOSITORY):$(TAG)-$* --os linux --arch $*
 
-.PHONY: ci-arm64-build
-ci-arm64-build:
-	docker build --build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}" -t openfaas/queue-worker:$(TAG)-arm64 . -f Dockerfile.arm64
+.PHONY: manifest-annotate-armhf
+manifest-annotate-armhf:
+	docker manifest annotate $(DOCKER_REPOSITORY):$(TAG) $(DOCKER_REPOSITORY):$(TAG)-armhf --os linux --arch arm --variant v6
 
-.PHONY: ci-arm64-push
-ci-arm64-push:
-	docker push openfaas/queue-worker:$(TAG)-arm64
+.PHONY: test
+test: ## Run tests
+	go test -v ./...
 
-.PHONY: ci-ppc64le-build
-ci-ppc64le-build:
-	docker build --build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}" -t openfaas/queue-worker:$(TAG)-ppc64le . -f Dockerfile.ppc64le
-
-.PHONY: ci-ppc64le-push
-ci-ppc64le-push:
-	docker push openfaas/queue-worker:$(TAG)-ppc64le
-
+.DEFAULT_GOAL := help
+.PHONY: help
+help: ## Show help
+	@echo "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:"
+	@grep -E '^[a-zA-Z_/%\-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
