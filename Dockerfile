@@ -12,24 +12,27 @@ COPY readconfig.go .
 COPY readconfig_test.go .
 COPY auth.go .
 
-RUN go test -v ./...
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+ARG go_opts
 
-FROM alpine:3.10
-
-RUN addgroup -S app \
+RUN env $go_opts CGO_ENABLED=0 go build -a -installsuffix cgo -o app . \
+  && addgroup -S app \
   && adduser -S -g app app \
-  && apk add --no-cache ca-certificates
+  && mkdir /scratch-tmp
 
-WORKDIR /home/app
+# we can't add user in next stage because it's from scratch
+# ca-certificates and tmp folder are also missing in scratch
+# so we add all of it here and copy files in next stage
+
+FROM scratch
 
 EXPOSE 8080
 ENV http_proxy      ""
 ENV https_proxy     ""
+USER app
 
+COPY --from=golang /etc/passwd /etc/group /etc/
+COPY --from=golang /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=golang --chown=app:app /scratch-tmp /tmp
 COPY --from=golang /go/src/github.com/openfaas/nats-queue-worker/app    .
 
-RUN chown -R app:app ./
-
-USER app
 CMD ["./app"]

@@ -3,7 +3,7 @@ sudo: required
 language: go
 
 go:
-  - 1.9.x
+  - 1.11.x
   
 services:
   - docker
@@ -17,22 +17,13 @@ install:
   - echo "Please don't go get"
 
 script:
-  - ./build.sh
+  - make build
 
-after_success:
-    - if [ ! -z "$TRAVIS_TAG" ] ; then
-    
-        if [ -z $DOCKER_NS ] ; then
-          export DOCKER_NS=openfaas;
-          fi
+before_deploy:
+- echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
-        docker tag $DOCKER_NS/queue-worker:latest-dev $DOCKER_NS/queue-worker:$TRAVIS_TAG;
-        echo $DOCKER_PASSWORD | docker login -u=$DOCKER_USERNAME --password-stdin;
-        docker push $DOCKER_NS/queue-worker:$TRAVIS_TAG;
-
-
-        docker tag $DOCKER_NS/queue-worker:latest-dev quay.io/$DOCKER_NS/queue-worker:$TRAVIS_TAG;
-        echo $QUAY_PASSWORD | docker login -u=$QUAY_USERNAME --password-stdin quay.io;
-        docker push quay.io/$DOCKER_NS/queue-worker:$TRAVIS_TAG;
-
-        fi
+deploy:
+  provider: script
+  script: TAG=$TRAVIS_TAG make push manifest
+  on:
+    tags: true
