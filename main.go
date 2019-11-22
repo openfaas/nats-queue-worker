@@ -201,7 +201,7 @@ func main() {
 	natsURL := fmt.Sprintf("nats://%s:%d", config.NatsAddress, config.NatsPort)
 
 	natsQueue := NATSQueue{
-		clusterID: "faas-cluster",
+		clusterID: config.NatsClusterName,
 		clientID:  "faas-worker-" + nats.GetClientID(hostname),
 		natsURL:   natsURL,
 
