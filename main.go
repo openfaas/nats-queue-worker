@@ -37,8 +37,9 @@ func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryS
 		qs)
 
 	if config.GatewayInvoke {
-		functionURL = fmt.Sprintf("http://%s/function/%s%s%s",
+		functionURL = fmt.Sprintf("http://%s:%d/function/%s%s%s",
 			config.GatewayAddress,
+			config.GatewayPort,
 			strings.Trim(req.Function, "/"),
 			pathVal,
 			qs)
@@ -197,7 +198,7 @@ func main() {
 
 	}
 
-	natsURL := "nats://" + config.NatsAddress + ":4222"
+	natsURL := fmt.Sprintf("nats://%s:%d", config.NatsAddress, config.NatsPort)
 
 	natsQueue := NATSQueue{
 		clusterID: "faas-cluster",
