@@ -39,6 +39,12 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		cfg.NatsPort = 4222
 	}
 
+	if val, exists := os.LookupEnv("faas_nats_cluster_name"); exists {
+		cfg.NatsClusterName = val
+	} else {
+		cfg.NatsClusterName = "faas-cluster"
+	}
+
 	if val, exists := os.LookupEnv("faas_gateway_address"); exists {
 		cfg.GatewayAddress = val
 	} else {
@@ -137,17 +143,18 @@ func (ReadConfig) Read() QueueWorkerConfig {
 }
 
 type QueueWorkerConfig struct {
-	NatsAddress    string
-	NatsPort       int
-	GatewayAddress string
-	GatewayPort    int
-	FunctionSuffix string
-	DebugPrintBody bool
-	WriteDebug     bool
-	MaxInflight    int
-	AckWait        time.Duration
-	MaxReconnect   int
-	ReconnectDelay time.Duration
-	GatewayInvoke  bool // GatewayInvoke invoke functions through gateway rather than directly
-	BasicAuth      bool
+	NatsAddress     string
+	NatsPort        int
+	NatsClusterName string
+	GatewayAddress  string
+	GatewayPort     int
+	FunctionSuffix  string
+	DebugPrintBody  bool
+	WriteDebug      bool
+	MaxInflight     int
+	AckWait         time.Duration
+	MaxReconnect    int
+	ReconnectDelay  time.Duration
+	GatewayInvoke   bool // GatewayInvoke invoke functions through gateway rather than directly
+	BasicAuth       bool
 }
