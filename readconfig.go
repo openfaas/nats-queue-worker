@@ -28,6 +28,17 @@ func (ReadConfig) Read() QueueWorkerConfig {
 		cfg.NatsAddress = "nats"
 	}
 
+	if value, exists := os.LookupEnv("faas_nats_port"); exists {
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			log.Println("converting faas_nats_port to int error:", err)
+		} else {
+			cfg.NatsPort = val
+		}
+	} else {
+		cfg.NatsPort = 4222
+	}
+
 	if val, exists := os.LookupEnv("faas_gateway_address"); exists {
 		cfg.GatewayAddress = val
 	} else {
@@ -127,6 +138,7 @@ func (ReadConfig) Read() QueueWorkerConfig {
 
 type QueueWorkerConfig struct {
 	NatsAddress    string
+	NatsPort       int
 	GatewayAddress string
 	GatewayPort    int
 	FunctionSuffix string

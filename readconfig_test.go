@@ -61,6 +61,7 @@ func Test_ReadConfig(t *testing.T) {
 	readConfig := ReadConfig{}
 
 	os.Setenv("faas_nats_address", "test_nats")
+	os.Setenv("faas_nats_port", "1234")
 	os.Setenv("faas_gateway_address", "test_gatewayaddr")
 	os.Setenv("faas_gateway_port", "8080")
 	os.Setenv("faas_function_suffix", "test_suffix")
@@ -74,6 +75,12 @@ func Test_ReadConfig(t *testing.T) {
 	want := "test_nats"
 	if config.NatsAddress != want {
 		t.Logf("NatsAddress want `%s`, got `%s`\n", want, config.NatsAddress)
+		t.Fail()
+	}
+
+	wantNatsPort := 1234
+	if config.NatsPort != wantNatsPort {
+		t.Logf("NatsPort want `%d`, got `%d`\n", wantNatsPort, config.NatsPort)
 		t.Fail()
 	}
 
