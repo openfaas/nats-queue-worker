@@ -17,7 +17,7 @@ install:
   - echo "Please don't go get"
 
 script:
-  - make build
+  - TAG=${TRAVIS_TAG:-latest} make build
 
 before_deploy:
 - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
