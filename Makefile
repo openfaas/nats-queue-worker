@@ -28,7 +28,7 @@ push-%:
 manifest: ## Create and push Docker manifest to combine all architectures in multi-arch Docker image
 	docker manifest create --amend $(DOCKER_REPOSITORY):$(TAG) $(addprefix $(DOCKER_REPOSITORY):$(TAG)-,$(ARCHS))
 	$(MAKE) $(addprefix manifest-annotate-,$(ARCHS))
-	docker manifest push $(DOCKER_REPOSITORY):$(TAG)
+	docker manifest push -p $(DOCKER_REPOSITORY):$(TAG)
 
 .PHONY: manifest-annotate-%
 manifest-annotate-%:
