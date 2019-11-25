@@ -21,36 +21,13 @@ import (
 	"github.com/openfaas/nats-queue-worker/nats"
 )
 
-func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryString string) string {
-	qs := ""
-	if len(queryString) > 0 {
-		qs = fmt.Sprintf("?%s", strings.TrimLeft(queryString, "?"))
-	}
-	pathVal := "/"
-	if len(path) > 0 {
-		pathVal = path
-	}
-	functionURL := fmt.Sprintf("http://%s%s:8080%s%s",
-		req.Function,
-		config.FunctionSuffix,
-		pathVal,
-		qs)
-
-	if config.GatewayInvoke {
-		functionURL = fmt.Sprintf("http://%s:%d/function/%s%s%s",
-			config.GatewayAddress,
-			config.GatewayPort,
-			strings.Trim(req.Function, "/"),
-			pathVal,
-			qs)
-	}
-
-	return functionURL
-}
-
 func main() {
 	readConfig := ReadConfig{}
-	config := readConfig.Read()
+	config, configErr := readConfig.Read()
+	if configErr != nil {
+		panic(configErr)
+	}
+
 	log.SetFlags(0)
 
 	hostname, _ := os.Hostname()
@@ -88,16 +65,20 @@ func main() {
 
 		xCallID := req.Header.Get("X-Call-Id")
 
-		fmt.Printf("Invoking: %s, %d bytes.\n", req.Function, len(req.Body))
+		functionURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
+		fmt.Printf("Invoking: %s with %d bytes, via: %s\n", req.Function, len(req.Body), functionURL)
 
 		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
 		}
 
-		functionURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
-
 		start := time.Now()
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
+		if err != nil {
+			log.Printf("Unable to post message due to invalid URL, error: %s", err.Error())
+			return
+		}
+
 		defer request.Body.Close()
 		copyHeaders(request.Header, &req.Header)
 
@@ -108,46 +89,48 @@ func main() {
 
 		var statusCode int
 		if err != nil {
-
 			statusCode = http.StatusServiceUnavailable
 		} else {
 			statusCode = res.StatusCode
 		}
 
 		duration := time.Since(start)
+
 		log.Printf("Invoked: %s [%d] in %fs", req.Function, statusCode, duration.Seconds())
 
 		if err != nil {
 			status = http.StatusServiceUnavailable
 
-			log.Println(err)
+			log.Printf("Error invoking %s, error: %s", req.Function, err)
+
 			timeTaken := time.Since(started).Seconds()
 
 			if req.CallbackURL != nil {
-				log.Printf("Callback to: %s\n", req.CallbackURL.String())
-
 				resultStatusCode, resultErr := postResult(&client,
 					res,
 					functionResult,
 					req.CallbackURL.String(),
 					xCallID,
 					status)
+
 				if resultErr != nil {
-					log.Println(resultErr)
+					log.Printf("Posted callback to: %s - status %d, error: %s\n", req.CallbackURL.String(), http.StatusServiceUnavailable, resultErr.Error())
 				} else {
-					log.Printf("Posted result: %d", resultStatusCode)
+					log.Printf("Posted result to %s - status: %d", req.CallbackURL.String(), resultStatusCode)
 				}
 			}
 
 			if config.GatewayInvoke == false {
-				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddress, credentials)
+				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddressURL(), credentials)
 				if reportErr != nil {
-					log.Println(reportErr)
+					log.Printf("Error posting report: %s\n", reportErr)
 				} else {
-					log.Printf("Posting report - %d\n", statusCode)
+					log.Printf("Posting report to gateway for %s - status: %d\n", req.Function, statusCode)
 				}
 				return
 			}
+
+			return
 		}
 
 		if res.Body != nil {
@@ -157,42 +140,41 @@ func main() {
 			functionResult = resData
 
 			if err != nil {
-				log.Println(err)
+				log.Printf("Error reading body for: %s, error: %s", req.Function, err)
 			}
 
 			if config.WriteDebug {
 				fmt.Println(string(functionResult))
 			} else {
-				fmt.Printf("Wrote %d Bytes\n", len(string(functionResult)))
+				fmt.Printf("%s returned %d bytes\n", req.Function, len(functionResult))
 			}
 		}
 
 		timeTaken := time.Since(started).Seconds()
 
-		fmt.Println(res.Status)
-
 		if req.CallbackURL != nil {
 			log.Printf("Callback to: %s\n", req.CallbackURL.String())
+
 			resultStatusCode, resultErr := postResult(&client,
 				res,
 				functionResult,
 				req.CallbackURL.String(),
 				xCallID,
 				res.StatusCode)
+
 			if resultErr != nil {
-				log.Println(resultErr)
+				log.Printf("Error posting to callback-url: %s\n", resultErr)
 			} else {
-				log.Printf("Posted result: %d", resultStatusCode)
+				log.Printf("Posted result for %s to callback-url: %s, status: %d", req.Function, req.CallbackURL.String(), resultStatusCode)
 			}
 		}
 
 		if config.GatewayInvoke == false {
-			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddress, credentials)
-
+			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddressURL(), credentials)
 			if reportErr != nil {
-				log.Println(reportErr)
+				log.Printf("Error posting report: %s\n", reportErr.Error())
 			} else {
-				log.Printf("Posting report - %d\n", statusCode)
+				log.Printf("Posting report for %s, status: %d\n", req.Function, statusCode)
 			}
 		}
 
@@ -279,6 +261,10 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 
 	request, err := http.NewRequest(http.MethodPost, callbackURL, reader)
 
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to post result, error: %s", err.Error())
+	}
+
 	if functionRes != nil {
 		copyHeaders(request.Header, &functionRes.Header)
 	}
@@ -302,6 +288,7 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
+
 	return res.StatusCode, nil
 }
 
@@ -341,4 +328,32 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	}
 
 	return res.StatusCode, nil
+}
+
+func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryString string) string {
+	qs := ""
+	if len(queryString) > 0 {
+		qs = fmt.Sprintf("?%s", strings.TrimLeft(queryString, "?"))
+	}
+	pathVal := "/"
+	if len(path) > 0 {
+		pathVal = path
+	}
+
+	var functionURL string
+	if config.GatewayInvoke {
+		functionURL = fmt.Sprintf("http://%s/function/%s%s%s",
+			config.GatewayAddressURL(),
+			strings.Trim(req.Function, "/"),
+			pathVal,
+			qs)
+	} else {
+		functionURL = fmt.Sprintf("http://%s%s:8080%s%s",
+			req.Function,
+			config.FunctionSuffix,
+			pathVal,
+			qs)
+	}
+
+	return functionURL
 }

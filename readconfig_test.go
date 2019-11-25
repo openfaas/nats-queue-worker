@@ -11,7 +11,7 @@ func Test_ReadConfig_GatewayInvokeDefault(t *testing.T) {
 	readConfig := ReadConfig{}
 
 	os.Setenv("gateway_invoke", "")
-	cfg := readConfig.Read()
+	cfg, _ := readConfig.Read()
 
 	gatewayInvokeWant := false
 	if cfg.GatewayInvoke != gatewayInvokeWant {
@@ -24,7 +24,7 @@ func Test_ReadConfig_GatewayInvokeSetToTrue(t *testing.T) {
 	readConfig := ReadConfig{}
 
 	os.Setenv("gateway_invoke", "true")
-	cfg := readConfig.Read()
+	cfg, _ := readConfig.Read()
 
 	gatewayInvokeWant := true
 	if cfg.GatewayInvoke != gatewayInvokeWant {
@@ -36,7 +36,7 @@ func Test_ReadConfig_BasicAuthDefaultIsFalse(t *testing.T) {
 	readConfig := ReadConfig{}
 
 	os.Setenv("basic_auth", "")
-	cfg := readConfig.Read()
+	cfg, _ := readConfig.Read()
 
 	want := false
 	if cfg.BasicAuth != want {
@@ -48,11 +48,25 @@ func Test_ReadConfig_BasicAuthSetToTrue(t *testing.T) {
 	readConfig := ReadConfig{}
 
 	os.Setenv("basic_auth", "true")
-	cfg := readConfig.Read()
+	cfg, _ := readConfig.Read()
 
 	want := true
 	if cfg.BasicAuth != want {
 		t.Errorf("basicAuth want %v, got %v", want, cfg.BasicAuth)
+	}
+}
+
+func Test_ReadConfig_IncorrectPortValue(t *testing.T) {
+
+	readConfig := ReadConfig{}
+
+	os.Setenv("faas_gateway_port", "8080a")
+	_, err := readConfig.Read()
+	want := "converting faas_gateway_port 8080a to int error: strconv.Atoi: parsing \"8080a\": invalid syntax"
+
+	if err.Error() != want {
+		t.Errorf("basicfaas_gateway_port want %q, got %q", want, err.Error())
+
 	}
 }
 
@@ -71,7 +85,7 @@ func Test_ReadConfig(t *testing.T) {
 	os.Setenv("max_inflight", "10")
 	os.Setenv("ack_wait", "10ms")
 
-	config := readConfig.Read()
+	config, _ := readConfig.Read()
 
 	want := "test_nats"
 	if config.NatsAddress != want {
@@ -91,7 +105,7 @@ func Test_ReadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	want = "test_gatewayaddr:8080"
+	want = "test_gatewayaddr"
 	if config.GatewayAddress != want {
 		t.Logf("GatewayAddress want `%s`, got `%s`\n", want, config.GatewayAddress)
 		t.Fail()
@@ -100,6 +114,12 @@ func Test_ReadConfig(t *testing.T) {
 	wantGatewayPort := 8080
 	if config.GatewayPort != wantGatewayPort {
 		t.Logf("GatewayPort want `%d`, got `%d`\n", wantGatewayPort, config.GatewayPort)
+		t.Fail()
+	}
+
+	want = "test_gatewayaddr:8080"
+	if config.GatewayAddressURL() != want {
+		t.Logf("GatewayAddressURL want `%s`, got `%s`\n", want, config.GatewayAddressURL())
 		t.Fail()
 	}
 
@@ -134,7 +154,7 @@ func Test_ReadConfig(t *testing.T) {
 	os.Unsetenv("max_inflight")
 	os.Unsetenv("ack_wait")
 
-	config = readConfig.Read()
+	config, _ = readConfig.Read()
 
 	wantMaxInflight = 1
 	if config.MaxInflight != wantMaxInflight {
@@ -151,7 +171,7 @@ func Test_ReadConfig(t *testing.T) {
 	os.Setenv("max_inflight", "10.00")
 	os.Setenv("ack_wait", "10")
 
-	config = readConfig.Read()
+	config, _ = readConfig.Read()
 
 	wantMaxInflight = 1
 	if config.MaxInflight != wantMaxInflight {
