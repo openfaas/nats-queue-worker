@@ -91,7 +91,7 @@ func Test_ReadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	want = "test_gatewayaddr:8080"
+	want = "test_gatewayaddr"
 	if config.GatewayAddress != want {
 		t.Logf("GatewayAddress want `%s`, got `%s`\n", want, config.GatewayAddress)
 		t.Fail()

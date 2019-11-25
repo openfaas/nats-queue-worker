@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -61,8 +60,6 @@ func (ReadConfig) Read() QueueWorkerConfig {
 	} else {
 		cfg.GatewayPort = 8080
 	}
-
-	cfg.GatewayAddress = fmt.Sprintf("%s:%d", cfg.GatewayAddress, cfg.GatewayPort)
 
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		cfg.FunctionSuffix = val
