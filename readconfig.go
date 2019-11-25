@@ -16,7 +16,7 @@ const DefaultMaxReconnect = 120
 
 const DefaultReconnectDelay = time.Second * 2
 
-func (ReadConfig) Read() QueueWorkerConfig {
+func (ReadConfig) Read() (QueueWorkerConfig, error) {
 	cfg := QueueWorkerConfig{
 		AckWait:     time.Second * 30,
 		MaxInflight: 1,
@@ -54,15 +54,14 @@ func (ReadConfig) Read() QueueWorkerConfig {
 	if value, exists := os.LookupEnv("faas_gateway_port"); exists {
 		val, err := strconv.Atoi(value)
 		if err != nil {
-			log.Println("converting faas_gateway_port to int error:", err)
-		} else {
-			cfg.GatewayPort = val
+			return QueueWorkerConfig{}, fmt.Errorf("converting faas_gateway_port %s to int error: %s", value, err)
 		}
+
+		cfg.GatewayPort = val
+
 	} else {
 		cfg.GatewayPort = 8080
 	}
-
-	cfg.GatewayAddress = fmt.Sprintf("%s:%d", cfg.GatewayAddress, cfg.GatewayPort)
 
 	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
 		cfg.FunctionSuffix = val
@@ -138,8 +137,8 @@ func (ReadConfig) Read() QueueWorkerConfig {
 			cfg.BasicAuth = true
 		}
 	}
-
-	return cfg
+	var err error
+	return cfg, err
 }
 
 type QueueWorkerConfig struct {
@@ -147,14 +146,19 @@ type QueueWorkerConfig struct {
 	NatsPort        int
 	NatsClusterName string
 	GatewayAddress  string
-	GatewayPort     int
-	FunctionSuffix  string
-	DebugPrintBody  bool
-	WriteDebug      bool
-	MaxInflight     int
-	AckWait         time.Duration
-	MaxReconnect    int
-	ReconnectDelay  time.Duration
-	GatewayInvoke   bool // GatewayInvoke invoke functions through gateway rather than directly
-	BasicAuth       bool
+
+	GatewayPort    int
+	FunctionSuffix string
+	DebugPrintBody bool
+	WriteDebug     bool
+	MaxInflight    int
+	AckWait        time.Duration
+	MaxReconnect   int
+	ReconnectDelay time.Duration
+	GatewayInvoke  bool // GatewayInvoke invoke functions through gateway rather than directly
+	BasicAuth      bool
+}
+
+func (q QueueWorkerConfig) GatewayAddressURL() string {
+	return fmt.Sprintf("%s:%d", q.GatewayAddress, q.GatewayPort)
 }
