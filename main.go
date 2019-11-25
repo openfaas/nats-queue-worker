@@ -146,8 +146,8 @@ func main() {
 				} else {
 					log.Printf("Posting report - %d\n", statusCode)
 				}
-				return
 			}
+			return
 		}
 
 		if res.Body != nil {
