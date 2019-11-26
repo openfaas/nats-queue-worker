@@ -33,6 +33,10 @@ func main() {
 	hostname, _ := os.Hostname()
 
 	var durable string
+	if config.NatsDurableQueueSubscription {
+		durable = "faas"
+	}
+
 	var unsubscribe bool
 	var credentials *auth.BasicAuthCredentials
 	var err error
