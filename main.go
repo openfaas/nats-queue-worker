@@ -111,7 +111,8 @@ func main() {
 					functionResult,
 					req.CallbackURL.String(),
 					xCallID,
-					status)
+					status,
+					timeTaken)
 
 				if resultErr != nil {
 					log.Printf("Posted callback to: %s - status %d, error: %s\n", req.CallbackURL.String(), http.StatusServiceUnavailable, resultErr.Error())
@@ -160,7 +161,8 @@ func main() {
 				functionResult,
 				req.CallbackURL.String(),
 				xCallID,
-				res.StatusCode)
+				res.StatusCode,
+				timeTaken)
 
 			if resultErr != nil {
 				log.Printf("Error posting to callback-url: %s\n", resultErr)
@@ -252,8 +254,12 @@ func makeClient() http.Client {
 	return proxyClient
 }
 
-func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int) (int, error) {
+func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int, timeTaken float64) (int, error) {
 	var reader io.Reader
+
+	if functionRes.Header.Get("X-Duration-Seconds") == "" {
+		functionRes.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
+	}
 
 	if result != nil {
 		reader = bytes.NewReader(result)
