@@ -117,6 +117,7 @@ func main() {
 					req.CallbackURL.String(),
 					xCallID,
 					status,
+					req.Function,
 					timeTaken)
 
 				if resultErr != nil {
@@ -167,6 +168,7 @@ func main() {
 				req.CallbackURL.String(),
 				xCallID,
 				res.StatusCode,
+				req.Function,
 				timeTaken)
 
 			if resultErr != nil {
@@ -269,7 +271,8 @@ func makeClient(tlsInsecure bool) http.Client {
 	return proxyClient
 }
 
-func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int, timeTaken float64) (int, error) {
+func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string,
+	statusCode int, functionName string, timeTaken float64) (int, error) {
 	var reader io.Reader
 
 	if result != nil {
@@ -288,6 +291,7 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 
 	request.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
 	request.Header.Set("X-Function-Status", fmt.Sprintf("%d", statusCode))
+	request.Header.Set("X-Function-Name", functionName)
 
 	if len(xCallID) > 0 {
 		request.Header.Set("X-Call-Id", xCallID)
