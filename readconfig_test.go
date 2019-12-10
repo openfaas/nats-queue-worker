@@ -78,6 +78,8 @@ func Test_ReadConfig(t *testing.T) {
 	os.Setenv("faas_nats_port", "1234")
 	os.Setenv("faas_nats_cluster_name", "example-nats-cluster")
 	os.Setenv("faas_nats_durable_queue_subscription", "true")
+	os.Setenv("faas_nats_channel", "foo")
+	os.Setenv("faas_nats_queue_group", "bar")
 	os.Setenv("faas_gateway_address", "test_gatewayaddr")
 	os.Setenv("faas_gateway_port", "8080")
 	os.Setenv("faas_function_suffix", "test_suffix")
@@ -109,6 +111,17 @@ func Test_ReadConfig(t *testing.T) {
 	wantNatsDurableQueueSubscription := true
 	if config.NatsDurableQueueSubscription != wantNatsDurableQueueSubscription {
 		t.Logf("NatsDurableQueueSubscription want `%t`, got `%t`\n", wantNatsDurableQueueSubscription, config.NatsDurableQueueSubscription)
+	}
+
+	want = "foo"
+	if config.NatsChannel != want {
+		t.Logf("NatsChannel want `%s`, got `%s`\n", want, config.NatsChannel)
+		t.Fail()
+	}
+
+	want = "bar"
+	if config.NatsQueueGroup != want {
+		t.Logf("NatsQueueGroup want `%s`, got `%s`\n", want, config.NatsQueueGroup)
 		t.Fail()
 	}
 
@@ -190,5 +203,29 @@ func Test_ReadConfig(t *testing.T) {
 	if config.AckWait != wantAckWait {
 		t.Logf("ackWait want `%v`, got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
+	}
+}
+
+func Test_ReadConfig_NatsChannelDefault(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("faas_nats_channel", "")
+	cfg, _ := readConfig.Read()
+
+	want := "faas-request"
+	if cfg.NatsChannel != want {
+		t.Errorf("NatsChannel want %v, got %v", want, cfg.NatsChannel)
+	}
+}
+
+func Test_ReadConfig_NatsQueueGroup(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("faas_nats_queue_group", "")
+	cfg, _ := readConfig.Read()
+
+	want := "faas"
+	if cfg.NatsQueueGroup != want {
+		t.Errorf("NatsQueueGroup want %v, got %v", want, cfg.NatsQueueGroup)
 	}
 }

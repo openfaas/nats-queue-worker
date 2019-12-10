@@ -196,8 +196,8 @@ func main() {
 		reconnectDelay: config.ReconnectDelay,
 		quitCh:         make(chan struct{}),
 
-		subject:        "faas-request",
-		qgroup:         "faas",
+		subject:        config.NatsChannel,
+		qgroup:         config.NatsQueueGroup,
 		durable:        durable,
 		messageHandler: messageHandler,
 		startOption:    stan.StartWithLastReceived(),

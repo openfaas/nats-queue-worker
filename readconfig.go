@@ -53,6 +53,18 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 		}
 	}
 
+	if val, exists := os.LookupEnv("faas_nats_channel"); exists && val != "" {
+		cfg.NatsChannel = val
+	} else {
+		cfg.NatsChannel = "faas-request"
+	}
+
+	if val, exists := os.LookupEnv("faas_nats_queue_group"); exists && val != "" {
+		cfg.NatsQueueGroup = val
+	} else {
+		cfg.NatsQueueGroup = "faas"
+	}
+
 	if val, exists := os.LookupEnv("faas_gateway_address"); exists {
 		cfg.GatewayAddress = val
 	} else {
@@ -154,6 +166,8 @@ type QueueWorkerConfig struct {
 	NatsPort                     int
 	NatsClusterName              string
 	NatsDurableQueueSubscription bool
+	NatsChannel                  string
+	NatsQueueGroup               string
 
 	GatewayAddress string
 	GatewayPort    int
