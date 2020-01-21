@@ -1,6 +1,6 @@
 ## Queue worker for OpenFaaS - NATS Streaming
 
-[![Build Status](https://travis-ci.com/openfaas/nats-queue-worker.svg?branch=master)](https://travis-ci.com/openfaas/nats-queue-worker)
+[![Build Status](https://travis-ci.com/openfaas/nats-queue-worker.svg?branch=master)](https://travis-ci.com/openfaas/nats-queue-worker) 
 
 This is a queue-worker to enable asynchronous processing of function requests. 
 
