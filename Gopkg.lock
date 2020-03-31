@@ -2,55 +2,107 @@
 
 
 [[projects]]
+  digest = "1:8f13f978d35181fada0ea713c14a224f2b329fa91c13438b2811331ecd8b16e1"
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
     "proto",
-    "protoc-gen-gogo/descriptor"
+    "protoc-gen-gogo/descriptor",
   ]
+  pruneopts = "UT"
   revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/nats-io/go-nats"
+  digest = "1:9b8ee267e79a1730cde2e326cc53035913fce52ceef48142c24f3a15e3c65cb3"
+  name = "github.com/nats-io/jwt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0c3fc7aed8bb2534e7bfdf0968a75890402d48cd"
+  version = "v0.3.2"
+
+[[projects]]
+  digest = "1:2e964212558ab7559cec820aebdf9f04c369f27aafe8581932ae5f0b6826572b"
+  name = "github.com/nats-io/nats.go"
   packages = [
     ".",
     "encoders/builtin",
-    "util"
+    "util",
   ]
-  revision = "062418ea1c2181f52dc0f954f6204370519a868b"
-  version = "v1.5.0"
+  pruneopts = "UT"
+  revision = "4d5d5d17e7df8f8e3bf3c1426a5ed759012faab8"
+  version = "v1.9.2"
 
 [[projects]]
-  name = "github.com/nats-io/go-nats-streaming"
-  packages = [
-    ".",
-    "pb"
-  ]
-  revision = "e15a53f85e4932540600a16b56f6c4f65f58176f"
-  version = "v0.4.0"
+  digest = "1:8fcffad2facde6f3eab8ad9b4787571ea21a09afa2e8084991664a779b27394f"
+  name = "github.com/nats-io/nkeys"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b5fd77f98a683853cab7313d1263093d2c0d4113"
+  version = "v0.1.4"
 
 [[projects]]
+  digest = "1:c3cd663f2f30b92536b9f290ac85c6310dae36a14cb8961553ae9ccf0d85ae41"
   name = "github.com/nats-io/nuid"
   packages = ["."]
+  pruneopts = "UT"
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:30147647e2ded41b85f4991e306053e478c009a817f4b53ce5e55ee7b5d2fbf6"
+  name = "github.com/nats-io/stan.go"
+  packages = [
+    ".",
+    "pb",
+  ]
+  pruneopts = "UT"
+  revision = "e2d4c025a5eea41d9566dc8e978c7ee697470b64"
+  version = "v0.6.0"
+
+[[projects]]
+  digest = "1:340f4e2e095ead4e0a15b4646da3e4533f8b6520e3a382eaf586e8166f3bbcb5"
   name = "github.com/openfaas/faas"
   packages = ["gateway/queue"]
+  pruneopts = "UT"
   revision = "bfa869ec8c0c04c26c5b0ed434bc367e712dcaef"
   version = "0.10.2"
 
 [[projects]]
+  digest = "1:deb76da5396c9f641ddea9ca79e31a14bdb09c787cdfda90488768b7539b1fd6"
   name = "github.com/openfaas/faas-provider"
   packages = ["auth"]
+  pruneopts = "UT"
   revision = "9ce928bc82cbb2642e6d534f93a7904116179e6c"
   version = "0.7.0"
+
+[[projects]]
+  digest = "1:2165477f55a57e56283780cfb43604682766219d0e316277f436e3d6b6328912"
+  name = "github.com/openfaas/nats-queue-worker"
+  packages = ["nats"]
+  pruneopts = "UT"
+  revision = "dea1c90b8cc66dc73597b7531a4fd29a32b5f88c"
+  version = "0.9.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:cd7e85fc3687e062714febdee3e8efeb00a413a2a620d28908fd0258261d2353"
+  name = "golang.org/x/crypto"
+  packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519",
+  ]
+  pruneopts = "UT"
+  revision = "0ec3e9974c59449edd84298612e9f16fa13368e8"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b568e20d336fb2625ad72caa1b479a46ed1362e320083720feabccd1abaedbee"
+  input-imports = [
+    "github.com/nats-io/stan.go",
+    "github.com/openfaas/faas-provider/auth",
+    "github.com/openfaas/faas/gateway/queue",
+    "github.com/openfaas/nats-queue-worker/nats",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
