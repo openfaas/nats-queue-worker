@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	stan "github.com/nats-io/go-nats-streaming"
+	stan "github.com/nats-io/stan.go"
 )
 
 // AsyncReport is the report from a function executed on a queue worker.
