@@ -272,12 +272,10 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 	}
 
 	if functionRes != nil {
-		if functionRes.Header.Get("X-Duration-Seconds") == "" {
-			functionRes.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
-		}
 		copyHeaders(request.Header, &functionRes.Header)
 	}
 
+	request.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
 	request.Header.Set("X-Function-Status", fmt.Sprintf("%d", statusCode))
 
 	if len(xCallID) > 0 {
