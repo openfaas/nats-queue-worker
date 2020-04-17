@@ -261,10 +261,6 @@ func makeClient() http.Client {
 func postResult(client *http.Client, functionRes *http.Response, result []byte, callbackURL string, xCallID string, statusCode int, timeTaken float64) (int, error) {
 	var reader io.Reader
 
-	if functionRes.Header.Get("X-Duration-Seconds") == "" {
-		functionRes.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
-	}
-
 	if result != nil {
 		reader = bytes.NewReader(result)
 	}
@@ -276,6 +272,9 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 	}
 
 	if functionRes != nil {
+		if functionRes.Header.Get("X-Duration-Seconds") == "" {
+			functionRes.Header.Set("X-Duration-Seconds", fmt.Sprintf("%f", timeTaken))
+		}
 		copyHeaders(request.Header, &functionRes.Header)
 	}
 
