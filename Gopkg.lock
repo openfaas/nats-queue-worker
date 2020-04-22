@@ -77,14 +77,6 @@
   version = "0.7.0"
 
 [[projects]]
-  digest = "1:2165477f55a57e56283780cfb43604682766219d0e316277f436e3d6b6328912"
-  name = "github.com/openfaas/nats-queue-worker"
-  packages = ["nats"]
-  pruneopts = "UT"
-  revision = "dea1c90b8cc66dc73597b7531a4fd29a32b5f88c"
-  version = "0.9.0"
-
-[[projects]]
   branch = "master"
   digest = "1:cd7e85fc3687e062714febdee3e8efeb00a413a2a620d28908fd0258261d2353"
   name = "golang.org/x/crypto"
@@ -102,7 +94,6 @@
     "github.com/nats-io/stan.go",
     "github.com/openfaas/faas-provider/auth",
     "github.com/openfaas/faas/gateway/queue",
-    "github.com/openfaas/nats-queue-worker/nats",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

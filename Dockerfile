@@ -1,5 +1,6 @@
-FROM golang:1.11-alpine as golang
+FROM golang:1.13-alpine as golang
 ENV CGO_ENABLED=0
+ENV GO111MODULE=off
 
 WORKDIR /go/src/github.com/openfaas/nats-queue-worker
 

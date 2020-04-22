@@ -17,6 +17,7 @@ import (
 	"time"
 
 	stan "github.com/nats-io/stan.go"
+
 	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
 	"github.com/openfaas/nats-queue-worker/nats"
