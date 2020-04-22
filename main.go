@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -49,7 +50,7 @@ func main() {
 		}
 	}
 
-	client := makeClient()
+	client := makeClient(config.TLSInsecure)
 
 	i := 0
 	messageHandler := func(msg *stan.Msg) {
@@ -241,20 +242,30 @@ func main() {
 
 // makeClient constructs a HTTP client with keep-alive turned
 // off and a dial-timeout of 30 seconds.
-func makeClient() http.Client {
-	proxyClient := http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 0,
-			}).DialContext,
-			MaxIdleConns:          1,
-			DisableKeepAlives:     true,
-			IdleConnTimeout:       120 * time.Millisecond,
-			ExpectContinueTimeout: 1500 * time.Millisecond,
-		},
+//
+// tlsInsecure is required for callbacks to internal services which
+// may not have a trusted CA root, or may be misconfigured
+func makeClient(tlsInsecure bool) http.Client {
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 0,
+		}).DialContext,
+
+		MaxIdleConns:          1,
+		DisableKeepAlives:     true,
+		IdleConnTimeout:       120 * time.Millisecond,
+		ExpectContinueTimeout: 1500 * time.Millisecond,
 	}
+	if tlsInsecure {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: tlsInsecure}
+	}
+
+	proxyClient := http.Client{
+		Transport: tr,
+	}
+
 	return proxyClient
 }
 

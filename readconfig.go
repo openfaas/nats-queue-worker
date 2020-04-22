@@ -157,8 +157,16 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 			cfg.BasicAuth = true
 		}
 	}
-	var err error
-	return cfg, err
+
+	if val, exists := os.LookupEnv("tls_insecure"); exists {
+		if val == "1" || val == "true" {
+			cfg.TLSInsecure = true
+		} else {
+			cfg.TLSInsecure = false
+		}
+	}
+
+	return cfg, nil
 }
 
 type QueueWorkerConfig struct {
@@ -170,16 +178,18 @@ type QueueWorkerConfig struct {
 	NatsQueueGroup               string
 
 	GatewayAddress string
-	GatewayPort    int
 	FunctionSuffix string
+	GatewayPort    int
+	MaxInflight    int
+	MaxReconnect   int
+	AckWait        time.Duration
+	ReconnectDelay time.Duration
+
 	DebugPrintBody bool
 	WriteDebug     bool
-	MaxInflight    int
-	AckWait        time.Duration
-	MaxReconnect   int
-	ReconnectDelay time.Duration
 	GatewayInvoke  bool // GatewayInvoke invoke functions through gateway rather than directly
 	BasicAuth      bool
+	TLSInsecure    bool
 }
 
 func (q QueueWorkerConfig) GatewayAddressURL() string {

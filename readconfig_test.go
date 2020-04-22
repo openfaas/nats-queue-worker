@@ -56,6 +56,30 @@ func Test_ReadConfig_BasicAuthSetToTrue(t *testing.T) {
 	}
 }
 
+func Test_ReadConfig_TLSInsecureDefaultFalse(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("tls_insecure", "")
+	cfg, _ := readConfig.Read()
+
+	want := false
+	if cfg.TLSInsecure != want {
+		t.Errorf("tls_insecure want %v, got %v", want, cfg.TLSInsecure)
+	}
+}
+
+func Test_ReadConfig_TLSInsecureSetTrue(t *testing.T) {
+	readConfig := ReadConfig{}
+
+	os.Setenv("tls_insecure", "true")
+	cfg, _ := readConfig.Read()
+
+	want := true
+	if cfg.TLSInsecure != want {
+		t.Errorf("tls_insecure want %v, got %v", want, cfg.TLSInsecure)
+	}
+}
+
 func Test_ReadConfig_IncorrectPortValue(t *testing.T) {
 
 	readConfig := ReadConfig{}
