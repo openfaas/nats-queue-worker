@@ -22,6 +22,7 @@ import (
 	"github.com/openfaas/faas-provider/auth"
 	"github.com/openfaas/faas/gateway/queue"
 	"github.com/openfaas/nats-queue-worker/nats"
+	"github.com/openfaas/nats-queue-worker/version"
 )
 
 func main() {
@@ -45,6 +46,9 @@ func main() {
 			log.Printf("Error with LoadCredentials: %s ", err.Error())
 		}
 	}
+
+	sha, release := version.GetReleaseInfo()
+	log.Printf("Starting queue-worker. Version: %s\tGit Commit: %s", release, sha)
 
 	client := makeClient(config.TLSInsecure)
 
