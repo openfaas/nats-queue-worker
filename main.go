@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	stan "github.com/nats-io/stan.go"
@@ -34,12 +35,6 @@ func main() {
 
 	hostname, _ := os.Hostname()
 
-	var durable string
-	if config.NatsDurableQueueSubscription {
-		durable = "faas"
-	}
-
-	var unsubscribe bool
 	var credentials *auth.BasicAuthCredentials
 	var err error
 
@@ -53,9 +48,9 @@ func main() {
 
 	client := makeClient(config.TLSInsecure)
 
-	i := 0
+	counter := uint64(0)
 	messageHandler := func(msg *stan.Msg) {
-		i++
+		i := atomic.AddUint64(&counter, 1)
 
 		log.Printf("[#%d] Received on [%s]: '%s'\n", i, msg.Subject, msg)
 
@@ -65,14 +60,14 @@ func main() {
 		unmarshalErr := json.Unmarshal(msg.Data, &req)
 
 		if unmarshalErr != nil {
-			log.Printf("Unmarshal error: %s with data %s", unmarshalErr, msg.Data)
+			log.Printf("[#%d] Unmarshal error: %s with data %s", i, unmarshalErr, msg.Data)
 			return
 		}
 
 		xCallID := req.Header.Get("X-Call-Id")
 
 		functionURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
-		fmt.Printf("Invoking: %s with %d bytes, via: %s\n", req.Function, len(req.Body), functionURL)
+		fmt.Printf("[#%d] Invoking: %s with %d bytes, via: %s\n", i, req.Function, len(req.Body), functionURL)
 
 		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
@@ -81,7 +76,7 @@ func main() {
 		start := time.Now()
 		request, err := http.NewRequest(http.MethodPost, functionURL, bytes.NewReader(req.Body))
 		if err != nil {
-			log.Printf("Unable to post message due to invalid URL, error: %s", err.Error())
+			log.Printf("[#%d] Unable to post message due to invalid URL, error: %s", i, err.Error())
 			return
 		}
 
@@ -102,12 +97,12 @@ func main() {
 
 		duration := time.Since(start)
 
-		log.Printf("Invoked: %s [%d] in %fs", req.Function, statusCode, duration.Seconds())
+		log.Printf("[#%d] Invoked: %s [%d] in %fs", i, req.Function, statusCode, duration.Seconds())
 
 		if err != nil {
 			status = http.StatusServiceUnavailable
 
-			log.Printf("Error invoking %s, error: %s", req.Function, err)
+			log.Printf("[#%d] Error invoking %s, error: %s", i, req.Function, err)
 
 			timeTaken := time.Since(started).Seconds()
 
@@ -122,18 +117,18 @@ func main() {
 					timeTaken)
 
 				if resultErr != nil {
-					log.Printf("Posted callback to: %s - status %d, error: %s\n", req.CallbackURL.String(), http.StatusServiceUnavailable, resultErr.Error())
+					log.Printf("[#%d] Posted callback to: %s - status %d, error: %s\n", i, req.CallbackURL.String(), http.StatusServiceUnavailable, resultErr.Error())
 				} else {
-					log.Printf("Posted result to %s - status: %d", req.CallbackURL.String(), resultStatusCode)
+					log.Printf("[#%d] Posted result to %s - status: %d", i, req.CallbackURL.String(), resultStatusCode)
 				}
 			}
 
 			if config.GatewayInvoke == false {
 				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddressURL(), credentials)
 				if reportErr != nil {
-					log.Printf("Error posting report: %s\n", reportErr)
+					log.Printf("[#%d] Error posting report: %s\n", i, reportErr)
 				} else {
-					log.Printf("Posting report to gateway for %s - status: %d\n", req.Function, statusCode)
+					log.Printf("[#%d] Posting report to gateway for %s - status: %d\n", i, req.Function, statusCode)
 				}
 				return
 			}
@@ -148,20 +143,20 @@ func main() {
 			functionResult = resData
 
 			if err != nil {
-				log.Printf("Error reading body for: %s, error: %s", req.Function, err)
+				log.Printf("[#%d] Error reading body for: %s, error: %s",i,  req.Function, err)
 			}
 
 			if config.WriteDebug {
 				fmt.Println(string(functionResult))
 			} else {
-				fmt.Printf("%s returned %d bytes\n", req.Function, len(functionResult))
+				fmt.Printf("[#%d] %s returned %d bytes\n", i, req.Function, len(functionResult))
 			}
 		}
 
 		timeTaken := time.Since(started).Seconds()
 
 		if req.CallbackURL != nil {
-			log.Printf("Callback to: %s\n", req.CallbackURL.String())
+			log.Printf("[#%d] Callback to: %s\n", i, req.CallbackURL.String())
 
 			resultStatusCode, resultErr := postResult(&client,
 				res,
@@ -173,18 +168,18 @@ func main() {
 				timeTaken)
 
 			if resultErr != nil {
-				log.Printf("Error posting to callback-url: %s\n", resultErr)
+				log.Printf("[#%d] Error posting to callback-url: %s\n", i, resultErr)
 			} else {
-				log.Printf("Posted result for %s to callback-url: %s, status: %d", req.Function, req.CallbackURL.String(), resultStatusCode)
+				log.Printf("[#%d] Posted result for %s to callback-url: %s, status: %d", i, req.Function, req.CallbackURL.String(), resultStatusCode)
 			}
 		}
 
 		if config.GatewayInvoke == false {
 			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddressURL(), credentials)
 			if reportErr != nil {
-				log.Printf("Error posting report: %s\n", reportErr.Error())
+				log.Printf("[#%d] Error posting report: %s\n", i, reportErr.Error())
 			} else {
-				log.Printf("Posting report for %s, status: %d\n", req.Function, statusCode)
+				log.Printf("[#%d] Posting report for %s, status: %d\n", i, req.Function, statusCode)
 			}
 		}
 
@@ -204,10 +199,8 @@ func main() {
 
 		subject:        config.NatsChannel,
 		qgroup:         config.NatsQueueGroup,
-		durable:        durable,
 		messageHandler: messageHandler,
-		startOption:    stan.StartWithLastReceived(),
-		maxInFlight:    stan.MaxInflight(config.MaxInflight),
+		maxInFlight:    config.MaxInflight,
 		ackWait:        config.AckWait,
 	}
 
@@ -218,29 +211,13 @@ func main() {
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
 	// Run cleanup when signal is received
 	signalChan := make(chan os.Signal, 1)
-	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt)
-	go func() {
-		for range signalChan {
-			fmt.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
-			// Do not unsubscribe a durable on exit, except if asked to.
-			if durable == "" || unsubscribe {
-				if err := natsQueue.unsubscribe(); err != nil {
-					log.Panicf(
-						"Cannot unsubscribe subject: %s from %s because of an error: %v",
-						natsQueue.subject,
-						natsQueue.natsURL,
-						err,
-					)
-				}
-			}
-			if err := natsQueue.closeConnection(); err != nil {
-				log.Panicf("Cannot close connection to %s because of an error: %v\n", natsQueue.natsURL, err)
-			}
-			cleanupDone <- true
-		}
-	}()
-	<-cleanupDone
+	<-signalChan
+	fmt.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
+	if err := natsQueue.closeConnection(); err != nil {
+		log.Panicf("Cannot close connection to %s because of an error: %v\n", natsQueue.natsURL, err)
+	}
+	close(signalChan)
 }
 
 // makeClient constructs a HTTP client with keep-alive turned

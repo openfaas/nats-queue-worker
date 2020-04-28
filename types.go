@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,12 +31,11 @@ type NATSQueue struct {
 
 	subject        string
 	qgroup         string
-	durable        string
 	ackWait        time.Duration
 	messageHandler func(*stan.Msg)
-	startOption    stan.SubscriptionOption
-	maxInFlight    stan.SubscriptionOption
+	maxInFlight    int
 	subscription   stan.Subscription
+	msgChan        chan *stan.Msg
 }
 
 // connect creates a subscription to NATS Streaming
@@ -64,14 +64,36 @@ func (q *NATSQueue) connect() error {
 	log.Printf("Subscribing to: %s at %s\n", q.subject, q.natsURL)
 	log.Println("Wait for ", q.ackWait)
 
+	// Pre-fill chan with q.maxInFlight tokens
+	msgChan := make(chan *stan.Msg)
+
+	handler := q.messageHandler
+	opts := []stan.SubscriptionOption{
+		stan.DurableName(strings.ReplaceAll(q.subject, ".", "_")),
+		stan.AckWait(q.ackWait),
+		stan.DeliverAllAvailable(),
+		stan.MaxInflight(q.maxInFlight),
+	}
+	if q.maxInFlight > 1 {
+		for i := 0; i < q.maxInFlight; i++ {
+			go func() {
+				for msg := range msgChan {
+					q.messageHandler(msg)
+					msg.Ack()
+				}
+			}()
+		}
+
+		opts = append(opts, stan.SetManualAckMode())
+		handler = func(msg *stan.Msg) {
+			msgChan <- msg
+		}
+	}
 	subscription, err := q.conn.QueueSubscribe(
 		q.subject,
 		q.qgroup,
-		q.messageHandler,
-		stan.DurableName(q.durable),
-		stan.AckWait(q.ackWait),
-		q.startOption,
-		q.maxInFlight,
+		handler,
+		opts...
 	)
 
 	if err != nil {
@@ -79,14 +101,15 @@ func (q *NATSQueue) connect() error {
 	}
 
 	log.Printf(
-		"Listening on [%s], clientID=[%s], qgroup=[%s] durable=[%s]\n",
+		"Listening on [%s], clientID=[%s], qgroup=[%s] maxInFlight=[%d]\n",
 		q.subject,
 		q.clientID,
 		q.qgroup,
-		q.durable,
+		q.maxInFlight,
 	)
 
 	q.subscription = subscription
+	q.msgChan = msgChan
 
 	return nil
 }
@@ -117,17 +140,6 @@ func (q *NATSQueue) reconnect() {
 	log.Printf("Reconnecting limit (%d) reached\n", q.maxReconnect)
 }
 
-func (q *NATSQueue) unsubscribe() error {
-	q.connMutex.Lock()
-	defer q.connMutex.Unlock()
-
-	if q.subscription != nil {
-		return fmt.Errorf("q.subscription is nil")
-	}
-
-	return q.subscription.Unsubscribe()
-}
-
 func (q *NATSQueue) closeConnection() error {
 	q.connMutex.Lock()
 	defer q.connMutex.Unlock()
@@ -136,7 +148,9 @@ func (q *NATSQueue) closeConnection() error {
 		return fmt.Errorf("q.conn is nil")
 	}
 
+	err := q.conn.Close()
+	close(q.msgChan)
 	close(q.quitCh)
 
-	return q.conn.Close()
+	return err
 }
