@@ -67,6 +67,10 @@ func (q *NATSQueue) connect() error {
 	// Pre-fill chan with q.maxInFlight tokens
 	msgChan := make(chan *stan.Msg)
 
+	if q.maxInFlight <= 0 {
+		q.maxInFlight = 1
+	}
+
 	handler := q.messageHandler
 	opts := []stan.SubscriptionOption{
 		stan.DurableName(strings.ReplaceAll(q.subject, ".", "_")),

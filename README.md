@@ -27,6 +27,7 @@ Screenshots from keynote / video - find out more over at https://www.openfaas.co
 | `gateway_invoke` | When `true` functions are invoked via the gateway, when `false` they are invoked directly | `false` |
 | `basic_auth` | When `true` basic auth is used to post any function statistics back to the gateway | `false` |
 | `write_debug` | Print verbose logs | `false` |
+| `max_inflight` | Number of messages sent to queue worker and how many functions are invoked concurrently. | `1` |
 | `faas_gateway_address` | Address of gateway DNS name | `gateway` |
 | `faas_gateway_port` | Port of gateway service | `8080` |
 | `faas_function_suffix` | When `gateway_invoke` is `false`, this suffix is used to contact a function, it may correspond to a Kubernetes namespace  | `` |
@@ -34,7 +35,6 @@ Screenshots from keynote / video - find out more over at https://www.openfaas.co
 | `faas_nats_address` | The host at which NATS Streaming can be reached | `nats` |
 | `faas_nats_port` | The port at which NATS Streaming can be reached | `4222` |
 | `faas_nats_cluster_name` | The name of the target NATS Streaming cluster | `faas-cluster` |
-| `faas_nats_durable_queue_subscription` | Whether to use a durable queue subscription | `false` |
 | `faas_reconnect_delay` | Delay between retrying to connect to NATS | `2s` |
 | `faas_print_body` | Print the body of the function invocation | `false` |
-
+ 
