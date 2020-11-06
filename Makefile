@@ -1,4 +1,4 @@
-DOCKER_REPOSITORY=openfaas/queue-worker
+DOCKER_REPOSITORY=ghcr.io/openfaas/queue-worker
 BUILD_ARGS=--build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}"
 ARCHS=amd64 arm64 armhf ppc64le
 TAG?=latest
