@@ -1,7 +1,7 @@
 ## queue-worker for NATS Streaming
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)
-[![Build Status](https://travis-ci.com/openfaas/nats-queue-worker.svg?branch=master)](https://travis-ci.com/openfaas/nats-queue-worker)
+[![Build Status](https://github.com/openfaas/nats-queue-worker/workflows/build/badge.svg?branch=master)](https://github.com/openfaas/nats-queue-worker/actions)
 
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/openfaas/nats-queue-worker?tab=overview)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +10,7 @@
 
 The queue-worker processes asynchronous function invocation requests, you can read more about this in the [async documentation](https://docs.openfaas.com/reference/async/)
 
-Docker Hub image: [openfaas/queue-worker](https://hub.docker.com/r/openfaas/queue-worker/)
+Github Container Registry image: [openfaas/queue-worker](https://github.com/orgs/openfaas/packages/container/package/queue-worker)
 
 License: MIT
 

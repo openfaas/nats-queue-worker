@@ -1,4 +1,13 @@
-FROM golang:1.13-alpine as golang
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.13-alpine as golang
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+ARG GIT_COMMIT
+ARG VERSION
+
 ENV CGO_ENABLED=0
 ENV GO111MODULE=off
 
@@ -15,13 +24,9 @@ COPY readconfig_test.go .
 COPY auth.go .
 COPY .git     .
 
-ARG go_opts
-
 RUN apk add --no-cache git
 
-RUN  VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
-    && GIT_COMMIT=$(git rev-list -1 HEAD) \
-    && env $go_opts CGO_ENABLED=0 go build \
+RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
         --ldflags "-s -w \
         -X github.com/openfaas/nats-queue-worker/version.GitCommit=${GIT_COMMIT}\
         -X github.com/openfaas/nats-queue-worker/version.Version=${VERSION}" \
