@@ -39,4 +39,3 @@ Screenshots from keynote / video - find out more over at https://www.openfaas.co
 | `faas_nats_cluster_name` | The name of the target NATS Streaming cluster | `faas-cluster` |
 | `faas_reconnect_delay` | Delay between retrying to connect to NATS | `2s` |
 | `faas_print_body` | Print the body of the function invocation | `false` |
- 

@@ -8,7 +8,7 @@ TAG?=latest
 export DOCKER_CLI_EXPERIMENTAL=enabled
 
 .PHONY: build
-build: $(addprefix build-,$(ARCHS))  ## Build Docker images for all architectures 
+build: $(addprefix build-,$(ARCHS))  ## Build Docker images for all architectures
 
 .PHONY: build-%
 build-%:
@@ -22,7 +22,7 @@ push: $(addprefix push-,$(ARCHS)) ## Push Docker images for all architectures
 
 .PHONY: push-%
 push-%:
-	docker push $(DOCKER_REPOSITORY):$(TAG)-$* 
+	docker push $(DOCKER_REPOSITORY):$(TAG)-$*
 
 .PHONY: manifest
 manifest: ## Create and push Docker manifest to combine all architectures in multi-arch Docker image
