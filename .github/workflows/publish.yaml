@@ -45,6 +45,6 @@ jobs:
             VERSION=${{ steps.get_tag.outputs.TAG }}
             GIT_COMMIT=${{ github.sha }}
           tags: |
-            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/nats-queue-worker:${{ steps.get_tag.outputs.TAG }}
-            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/nats-queue-worker:${{ github.sha }}
-            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/nats-queue-worker:latest
+            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ steps.get_tag.outputs.TAG }}
+            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ github.sha }}
+            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:latest
