@@ -21,7 +21,7 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
 
       - name: Get TAG
