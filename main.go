@@ -56,7 +56,10 @@ func main() {
 	messageHandler := func(msg *stan.Msg) {
 		i := atomic.AddUint64(&counter, 1)
 
-		log.Printf("[#%d] Received on [%s]: '%s'\n", i, msg.Subject, msg)
+		log.Printf("[#%d] Received on [%s]: '%s' \n", i, msg.Subject, redact(msg))
+		if config.DebugPrintBody {
+			log.Printf("%s \n", msg.Data)
+		}
 
 		started := time.Now()
 
@@ -147,7 +150,7 @@ func main() {
 			functionResult = resData
 
 			if err != nil {
-				log.Printf("[#%d] Error reading body for: %s, error: %s",i,  req.Function, err)
+				log.Printf("[#%d] Error reading body for: %s, error: %s", i, req.Function, err)
 			}
 
 			if config.WriteDebug {
@@ -294,6 +297,17 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 	}
 
 	return res.StatusCode, nil
+}
+
+func redact(msg *stan.Msg) string {
+	if msg == nil {
+		return ""
+	}
+	rmsg := *msg
+	if len(rmsg.Data) > 0 {
+		rmsg.Data = []byte(`xxxxxx`)
+	}
+	return rmsg.String()
 }
 
 func copyHeaders(destination http.Header, source *http.Header) {

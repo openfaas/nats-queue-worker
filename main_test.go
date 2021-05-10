@@ -82,3 +82,15 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvokeOff_UsesDirectInvocation(t 
 		t.Errorf("want %s, got %s", wantURL, fnURL)
 	}
 }
+
+func Test_redact(t *testing.T) {
+
+	m := &stan.Msg{
+		Data: []byte(`to-be-redacted-in-logs`)
+	}
+	want:= []byte(`xxxxxx`)
+	got := redact(m)
+	if !bytes.Equal(got.Data,want) {
+		t.Errorf("want %s, got %s", want, got.Data)
+	}
+}
