@@ -1,8 +1,11 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
+	stan "github.com/nats-io/stan.go"
+	"github.com/nats-io/stan.go/pb"
 	"github.com/openfaas/faas/gateway/queue"
 )
 
@@ -86,11 +89,18 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvokeOff_UsesDirectInvocation(t 
 func Test_redact(t *testing.T) {
 
 	m := &stan.Msg{
-		Data: []byte(`to-be-redacted-in-logs`)
+		MsgProto: pb.MsgProto{
+			Data: []byte(`to-be-redacted-in-logs`),
+		},
 	}
-	want:= []byte(`xxxxxx`)
+	want := &stan.Msg{
+		MsgProto: pb.MsgProto{
+			Data: []byte(`xxxxxx`),
+		},
+	}
 	got := redact(m)
-	if !bytes.Equal(got.Data,want) {
-		t.Errorf("want %s, got %s", want, got.Data)
+
+	if strings.Compare(got, want.String()) != 0 {
+		t.Errorf("want %s, got %s", want, got)
 	}
 }
