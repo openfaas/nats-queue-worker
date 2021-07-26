@@ -20,9 +20,6 @@ github.com/nats-io/nuid
 ## explicit
 github.com/nats-io/stan.go
 github.com/nats-io/stan.go/pb
-# github.com/openfaas/faas v0.0.0-20200422113858-a7c6c3920078
-## explicit
-github.com/openfaas/faas/gateway/queue
 # github.com/openfaas/faas-provider v0.18.6
 ## explicit
 github.com/openfaas/faas-provider/auth

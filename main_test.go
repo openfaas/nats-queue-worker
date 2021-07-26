@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/openfaas/faas/gateway/queue"
+	ftypes "github.com/openfaas/faas-provider/types"
 )
 
 func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_IncludesGWAddress(t *testing.T) {
@@ -13,7 +13,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_IncludesGWAddress(t *testi
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
-	req := queue.Request{
+	req := ftypes.QueueRequest{
 		Function: "function1",
 		Path:     "/",
 	}
@@ -32,7 +32,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithQS(t *testing.T) {
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
-	req := queue.Request{
+	req := ftypes.QueueRequest{
 		Function:    "function1",
 		QueryString: "user=1",
 	}
@@ -51,7 +51,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithPath(t *testing.T) {
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
-	req := queue.Request{
+	req := ftypes.QueueRequest{
 		Function: "function1",
 		Path:     "/resources/main.css",
 	}
@@ -70,7 +70,7 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvokeOff_UsesDirectInvocation(t 
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
-	req := queue.Request{
+	req := ftypes.QueueRequest{
 		Function: "function1",
 		Path:     "/",
 	}
