@@ -20,7 +20,7 @@ import (
 	stan "github.com/nats-io/stan.go"
 
 	"github.com/openfaas/faas-provider/auth"
-	"github.com/openfaas/faas/gateway/queue"
+	ftypes "github.com/openfaas/faas-provider/types"
 	"github.com/openfaas/nats-queue-worker/nats"
 	"github.com/openfaas/nats-queue-worker/version"
 )
@@ -60,7 +60,7 @@ func main() {
 
 		started := time.Now()
 
-		req := queue.Request{}
+		req := ftypes.QueueRequest{}
 		unmarshalErr := json.Unmarshal(msg.Data, &req)
 
 		if unmarshalErr != nil {
@@ -147,7 +147,7 @@ func main() {
 			functionResult = resData
 
 			if err != nil {
-				log.Printf("[#%d] Error reading body for: %s, error: %s",i,  req.Function, err)
+				log.Printf("[#%d] Error reading body for: %s, error: %s", i, req.Function, err)
 			}
 
 			if config.WriteDebug {
@@ -334,7 +334,7 @@ func postReport(client *http.Client, function string, statusCode int, timeTaken 
 	return res.StatusCode, nil
 }
 
-func makeFunctionURL(req *queue.Request, config *QueueWorkerConfig, path, queryString string) string {
+func makeFunctionURL(req *ftypes.QueueRequest, config *QueueWorkerConfig, path, queryString string) string {
 	qs := ""
 	if len(queryString) > 0 {
 		qs = fmt.Sprintf("?%s", strings.TrimLeft(queryString, "?"))
