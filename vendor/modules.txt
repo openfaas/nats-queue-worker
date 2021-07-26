@@ -23,9 +23,10 @@ github.com/nats-io/stan.go/pb
 # github.com/openfaas/faas v0.0.0-20200422113858-a7c6c3920078
 ## explicit
 github.com/openfaas/faas/gateway/queue
-# github.com/openfaas/faas-provider v0.0.0-20180906150212-9ce928bc82cb
+# github.com/openfaas/faas-provider v0.18.6
 ## explicit
 github.com/openfaas/faas-provider/auth
+github.com/openfaas/faas-provider/types
 # golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
