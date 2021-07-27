@@ -162,11 +162,11 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 }
 
 type QueueWorkerConfig struct {
-	NatsAddress                  string
-	NatsPort                     int
-	NatsClusterName              string
-	NatsChannel                  string
-	NatsQueueGroup               string
+	NatsAddress     string
+	NatsPort        int
+	NatsClusterName string
+	NatsChannel     string
+	NatsQueueGroup  string
 
 	GatewayAddress string
 	FunctionSuffix string
