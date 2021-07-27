@@ -97,7 +97,7 @@ func (q *NATSQueue) connect() error {
 		q.subject,
 		q.qgroup,
 		handler,
-		opts...
+		opts...,
 	)
 
 	if err != nil {

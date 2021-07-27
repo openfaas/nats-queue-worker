@@ -22,19 +22,17 @@ COPY go.sum     .
 COPY main.go    .
 COPY types.go   .
 COPY auth.go    .
-COPY .git       .
 COPY readconfig.go      .
 COPY readconfig_test.go .
 
-ARG go_opts
+# Run a gofmt and exclude all vendored code.
+RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
+RUN go test $(go list ./... | grep -v integration | grep -v /vendor/ | grep -v /template/) -cover
 
-RUN  VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
-    && GIT_COMMIT=$(git rev-list -1 HEAD) \
-    && env $go_opts CGO_ENABLED=0 go build \
-        --ldflags "-s -w \
-        -X github.com/openfaas/nats-queue-worker/version.GitCommit=${GIT_COMMIT}\
-        -X github.com/openfaas/nats-queue-worker/version.Version=${VERSION}" \
-        -a -installsuffix cgo -o worker .
+RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build --ldflags "-s -w \
+    -X \"github.com/openfaas/nats-queue-worker/version.GitCommit=${GIT_COMMIT}\" \
+    -X \"github.com/openfaas/nats-queue-worker/version.Version=${VERSION}\"" \
+    -a -installsuffix cgo -o worker .
 
 # we can't add user in next stage because it's from scratch
 # ca-certificates and tmp folder are also missing in scratch

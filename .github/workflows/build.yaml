@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.15.x]
+        go-version: [1.16.x]
         os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
@@ -30,7 +30,9 @@ jobs:
       - name: Get Repo Owner
         id: get_repo_owner
         run: echo ::set-output name=repo_owner::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-
+      - name: Get TAG
+        id: get_tag
+        run: echo ::set-output name=TAG::latest-dev
       - name: Build x86_64 container into library
         uses: docker/build-push-action@v2
         with:
@@ -38,6 +40,9 @@ jobs:
           file: ./Dockerfile
           outputs: "type=docker,push=false"
           platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.get_tag.outputs.TAG }}
+            GIT_COMMIT=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ github.sha }}
 
@@ -48,5 +53,8 @@ jobs:
           file: ./Dockerfile
           outputs: "type=image,push=false"
           platforms: linux/amd64,linux/arm/v7,linux/arm64
+          build-args: |
+            VERSION=${{ steps.get_tag.outputs.TAG }}
+            GIT_COMMIT=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ github.sha }}
