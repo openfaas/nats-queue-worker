@@ -128,7 +128,7 @@ func main() {
 			}
 
 			if config.GatewayInvoke == false {
-				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, config.GatewayAddressURL(), credentials)
+				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, &config, credentials)
 				if reportErr != nil {
 					log.Printf("[#%d] Error posting report: %s\n", i, reportErr)
 				} else {
@@ -179,7 +179,7 @@ func main() {
 		}
 
 		if config.GatewayInvoke == false {
-			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, config.GatewayAddressURL(), credentials)
+			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, &config, credentials)
 			if reportErr != nil {
 				log.Printf("[#%d] Error posting report: %s\n", i, reportErr.Error())
 			} else {
@@ -304,18 +304,18 @@ func copyHeaders(destination http.Header, source *http.Header) {
 	}
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64, gatewayAddress string, credentials *auth.BasicAuthCredentials) (int, error) {
+func postReport(client *http.Client, function string, statusCode int, timeTaken float64, config *QueueWorkerConfig, credentials *auth.BasicAuthCredentials) (int, error) {
 	req := AsyncReport{
 		FunctionName: function,
 		StatusCode:   statusCode,
 		TimeTaken:    timeTaken,
 	}
 
-	targetPostback := fmt.Sprintf("http://%s/system/async-report", gatewayAddress)
+	targetPostback := fmt.Sprintf("http://%s/system/async-report", config.GatewayAddressURL())
 	reqBytes, _ := json.Marshal(req)
 	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
 
-	if os.Getenv("basic_auth") == "true" && credentials != nil {
+	if config.BasicAuth && credentials != nil {
 		request.SetBasicAuth(credentials.User, credentials.Password)
 	}
 
