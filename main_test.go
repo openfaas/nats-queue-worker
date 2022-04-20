@@ -6,10 +6,9 @@ import (
 	ftypes "github.com/openfaas/faas-provider/types"
 )
 
-func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_IncludesGWAddress(t *testing.T) {
+func Test_makeFunctionURL_DefaultPathQS_IncludesGWAddress(t *testing.T) {
 	config := QueueWorkerConfig{
 		FunctionSuffix: "",
-		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
@@ -25,10 +24,9 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_IncludesGWAddress(t *testi
 	}
 }
 
-func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithQS(t *testing.T) {
+func Test_makeFunctionURL_DefaultPathQS_WithQS(t *testing.T) {
 	config := QueueWorkerConfig{
 		FunctionSuffix: "",
-		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
@@ -44,10 +42,9 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithQS(t *testing.T) {
 	}
 }
 
-func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithPath(t *testing.T) {
+func Test_makeFunctionURL_DefaultPathQS_WithPath(t *testing.T) {
 	config := QueueWorkerConfig{
 		FunctionSuffix: "",
-		GatewayInvoke:  true,
 		GatewayAddress: "gateway",
 		GatewayPort:    8080,
 	}
@@ -58,26 +55,6 @@ func Test_makeFunctionURL_DefaultPathQS_GatewayInvoke_WithPath(t *testing.T) {
 
 	fnURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
 	wantURL := "http://gateway:8080/function/function1/resources/main.css"
-	if fnURL != wantURL {
-		t.Errorf("want %s, got %s", wantURL, fnURL)
-	}
-}
-
-func Test_makeFunctionURL_DefaultPathQS_GatewayInvokeOff_UsesDirectInvocation(t *testing.T) {
-	config := QueueWorkerConfig{
-		FunctionSuffix: ".openfaas-fn",
-		GatewayInvoke:  false,
-		GatewayAddress: "gateway",
-		GatewayPort:    8080,
-	}
-	req := ftypes.QueueRequest{
-		Function: "function1",
-		Path:     "/",
-	}
-
-	fnURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
-
-	wantURL := "http://function1.openfaas-fn:8080/"
 	if fnURL != wantURL {
 		t.Errorf("want %s, got %s", wantURL, fnURL)
 	}
