@@ -75,10 +75,6 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 		cfg.GatewayPort = 8080
 	}
 
-	if val, exists := os.LookupEnv("faas_function_suffix"); exists {
-		cfg.FunctionSuffix = val
-	}
-
 	if val, exists := os.LookupEnv("faas_print_body"); exists {
 		if val == "1" || val == "true" {
 			cfg.DebugPrintBody = true
@@ -138,18 +134,6 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 		}
 	}
 
-	if val, exists := os.LookupEnv("gateway_invoke"); exists {
-		if val == "1" || val == "true" {
-			cfg.GatewayInvoke = true
-		}
-	}
-
-	if val, exists := os.LookupEnv("basic_auth"); exists {
-		if val == "1" || val == "true" {
-			cfg.BasicAuth = true
-		}
-	}
-
 	if val, exists := os.LookupEnv("tls_insecure"); exists {
 		if val == "1" || val == "true" {
 			cfg.TLSInsecure = true
@@ -178,8 +162,6 @@ type QueueWorkerConfig struct {
 
 	DebugPrintBody bool
 	WriteDebug     bool
-	GatewayInvoke  bool // GatewayInvoke invoke functions through gateway rather than directly
-	BasicAuth      bool
 	TLSInsecure    bool
 }
 

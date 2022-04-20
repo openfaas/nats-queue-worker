@@ -19,7 +19,6 @@ import (
 
 	stan "github.com/nats-io/stan.go"
 
-	"github.com/openfaas/faas-provider/auth"
 	ftypes "github.com/openfaas/faas-provider/types"
 	"github.com/openfaas/nats-queue-worker/nats"
 	"github.com/openfaas/nats-queue-worker/version"
@@ -36,19 +35,8 @@ func main() {
 
 	hostname, _ := os.Hostname()
 
-	var credentials *auth.BasicAuthCredentials
-	var err error
-
-	if config.BasicAuth {
-		log.Printf("Loading basic authentication credentials")
-		credentials, err = LoadCredentials()
-		if err != nil {
-			log.Printf("Error with LoadCredentials: %s ", err.Error())
-		}
-	}
-
 	sha, release := version.GetReleaseInfo()
-	log.Printf("Starting queue-worker. Version: %s\tGit Commit: %s", release, sha)
+	log.Printf("Starting queue-worker (Community Edition). Version: %s\tGit Commit: %s", release, sha)
 
 	client := makeClient(config.TLSInsecure)
 
@@ -127,16 +115,6 @@ func main() {
 				}
 			}
 
-			if config.GatewayInvoke == false {
-				statusCode, reportErr := postReport(&client, req.Function, status, timeTaken, &config, credentials)
-				if reportErr != nil {
-					log.Printf("[#%d] Error posting report: %s\n", i, reportErr)
-				} else {
-					log.Printf("[#%d] Posting report to gateway for %s - status: %d\n", i, req.Function, statusCode)
-				}
-				return
-			}
-
 			return
 		}
 
@@ -175,15 +153,6 @@ func main() {
 				log.Printf("[#%d] Error posting to callback-url: %s\n", i, resultErr)
 			} else {
 				log.Printf("[#%d] Posted result for %s to callback-url: %s, status: %d", i, req.Function, req.CallbackURL.String(), resultStatusCode)
-			}
-		}
-
-		if config.GatewayInvoke == false {
-			statusCode, reportErr := postReport(&client, req.Function, res.StatusCode, timeTaken, &config, credentials)
-			if reportErr != nil {
-				log.Printf("[#%d] Error posting report: %s\n", i, reportErr.Error())
-			} else {
-				log.Printf("[#%d] Posting report for %s, status: %d\n", i, req.Function, statusCode)
 			}
 		}
 
@@ -304,36 +273,6 @@ func copyHeaders(destination http.Header, source *http.Header) {
 	}
 }
 
-func postReport(client *http.Client, function string, statusCode int, timeTaken float64, config *QueueWorkerConfig, credentials *auth.BasicAuthCredentials) (int, error) {
-	req := AsyncReport{
-		FunctionName: function,
-		StatusCode:   statusCode,
-		TimeTaken:    timeTaken,
-	}
-
-	targetPostback := fmt.Sprintf("http://%s/system/async-report", config.GatewayAddressURL())
-	reqBytes, _ := json.Marshal(req)
-	request, err := http.NewRequest(http.MethodPost, targetPostback, bytes.NewReader(reqBytes))
-
-	if config.BasicAuth && credentials != nil {
-		request.SetBasicAuth(credentials.User, credentials.Password)
-	}
-
-	defer request.Body.Close()
-
-	res, err := client.Do(request)
-
-	if err != nil {
-		return http.StatusGatewayTimeout, fmt.Errorf("cannot post report to %s: %s", targetPostback, err)
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	return res.StatusCode, nil
-}
-
 func makeFunctionURL(req *ftypes.QueueRequest, config *QueueWorkerConfig, path, queryString string) string {
 	qs := ""
 	if len(queryString) > 0 {
@@ -344,20 +283,10 @@ func makeFunctionURL(req *ftypes.QueueRequest, config *QueueWorkerConfig, path, 
 		pathVal = path
 	}
 
-	var functionURL string
-	if config.GatewayInvoke {
-		functionURL = fmt.Sprintf("http://%s/function/%s%s%s",
-			config.GatewayAddressURL(),
-			strings.Trim(req.Function, "/"),
-			pathVal,
-			qs)
-	} else {
-		functionURL = fmt.Sprintf("http://%s%s:8080%s%s",
-			req.Function,
-			config.FunctionSuffix,
-			pathVal,
-			qs)
-	}
+	return fmt.Sprintf("http://%s/function/%s%s%s",
+		config.GatewayAddressURL(),
+		strings.Trim(req.Function, "/"),
+		pathVal,
+		qs)
 
-	return functionURL
 }

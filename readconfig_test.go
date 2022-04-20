@@ -6,56 +6,6 @@ import (
 	"time"
 )
 
-func Test_ReadConfig_GatewayInvokeDefault(t *testing.T) {
-
-	readConfig := ReadConfig{}
-
-	os.Setenv("gateway_invoke", "")
-	cfg, _ := readConfig.Read()
-
-	gatewayInvokeWant := false
-	if cfg.GatewayInvoke != gatewayInvokeWant {
-		t.Errorf("gatewayInvokeWant want %v, got %v", gatewayInvokeWant, cfg.GatewayInvoke)
-	}
-}
-
-func Test_ReadConfig_GatewayInvokeSetToTrue(t *testing.T) {
-
-	readConfig := ReadConfig{}
-
-	os.Setenv("gateway_invoke", "true")
-	cfg, _ := readConfig.Read()
-
-	gatewayInvokeWant := true
-	if cfg.GatewayInvoke != gatewayInvokeWant {
-		t.Errorf("gatewayInvokeWant want %v, got %v", gatewayInvokeWant, cfg.GatewayInvoke)
-	}
-}
-
-func Test_ReadConfig_BasicAuthDefaultIsFalse(t *testing.T) {
-	readConfig := ReadConfig{}
-
-	os.Setenv("basic_auth", "")
-	cfg, _ := readConfig.Read()
-
-	want := false
-	if cfg.BasicAuth != want {
-		t.Errorf("basicAuth want %v, got %v", want, cfg.BasicAuth)
-	}
-}
-
-func Test_ReadConfig_BasicAuthSetToTrue(t *testing.T) {
-	readConfig := ReadConfig{}
-
-	os.Setenv("basic_auth", "true")
-	cfg, _ := readConfig.Read()
-
-	want := true
-	if cfg.BasicAuth != want {
-		t.Errorf("basicAuth want %v, got %v", want, cfg.BasicAuth)
-	}
-}
-
 func Test_ReadConfig_TLSInsecureDefaultFalse(t *testing.T) {
 	readConfig := ReadConfig{}
 
@@ -105,7 +55,6 @@ func Test_ReadConfig(t *testing.T) {
 	os.Setenv("faas_nats_queue_group", "bar")
 	os.Setenv("faas_gateway_address", "test_gatewayaddr")
 	os.Setenv("faas_gateway_port", "8080")
-	os.Setenv("faas_function_suffix", "test_suffix")
 	os.Setenv("faas_print_body", "true")
 	os.Setenv("write_debug", "true")
 	os.Setenv("max_inflight", "10")
@@ -158,12 +107,6 @@ func Test_ReadConfig(t *testing.T) {
 	want = "test_gatewayaddr:8080"
 	if config.GatewayAddressURL() != want {
 		t.Logf("GatewayAddressURL want `%s`, got `%s`\n", want, config.GatewayAddressURL())
-		t.Fail()
-	}
-
-	want = "test_suffix"
-	if config.FunctionSuffix != want {
-		t.Logf("FunctionSuffix want `%s`, got `%s`\n", want, config.FunctionSuffix)
 		t.Fail()
 	}
 
