@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,7 +37,7 @@ func main() {
 	sha, release := version.GetReleaseInfo()
 	log.Printf("Starting queue-worker (Community Edition). Version: %s\tGit Commit: %s", release, sha)
 
-	client := makeClient(config.TLSInsecure)
+	client := makeClient()
 
 	counter := uint64(0)
 	messageHandler := func(msg *stan.Msg) {
@@ -49,10 +48,8 @@ func main() {
 		started := time.Now()
 
 		req := ftypes.QueueRequest{}
-		unmarshalErr := json.Unmarshal(msg.Data, &req)
-
-		if unmarshalErr != nil {
-			log.Printf("[#%d] Unmarshal error: %s with data %s", i, unmarshalErr, msg.Data)
+		if err := json.Unmarshal(msg.Data, &req); err != nil {
+			log.Printf("[#%d] Unmarshal error: %s with data %s", i, err, msg.Data)
 			return
 		}
 
@@ -195,10 +192,7 @@ func main() {
 
 // makeClient constructs a HTTP client with keep-alive turned
 // off and a dial-timeout of 30 seconds.
-//
-// tlsInsecure is required for callbacks to internal services which
-// may not have a trusted CA root, or may be misconfigured
-func makeClient(tlsInsecure bool) http.Client {
+func makeClient() http.Client {
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -210,9 +204,6 @@ func makeClient(tlsInsecure bool) http.Client {
 		DisableKeepAlives:     true,
 		IdleConnTimeout:       120 * time.Millisecond,
 		ExpectContinueTimeout: 1500 * time.Millisecond,
-	}
-	if tlsInsecure {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: tlsInsecure}
 	}
 
 	proxyClient := http.Client{
