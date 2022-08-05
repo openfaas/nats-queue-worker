@@ -134,14 +134,6 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 		}
 	}
 
-	if val, exists := os.LookupEnv("tls_insecure"); exists {
-		if val == "1" || val == "true" {
-			cfg.TLSInsecure = true
-		} else {
-			cfg.TLSInsecure = false
-		}
-	}
-
 	return cfg, nil
 }
 
@@ -162,7 +154,6 @@ type QueueWorkerConfig struct {
 
 	DebugPrintBody bool
 	WriteDebug     bool
-	TLSInsecure    bool
 }
 
 func (q QueueWorkerConfig) GatewayAddressURL() string {
