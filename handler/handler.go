@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+const sharedQueue = "faas-request"
+
 // CreateNATSQueue ready for asynchronous processing
 func CreateNATSQueue(address string, port int, clusterName, channel string, clientConfig NATSConfig) (*NATSQueue, error) {
 	var err error
@@ -16,7 +18,7 @@ func CreateNATSQueue(address string, port int, clusterName, channel string, clie
 
 	// If 'channel' is empty, use the previous default.
 	if channel == "" {
-		channel = "faas-request"
+		channel = sharedQueue
 	}
 
 	queue1 := NATSQueue{

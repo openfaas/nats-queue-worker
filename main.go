@@ -23,11 +23,13 @@ import (
 	"github.com/openfaas/nats-queue-worker/version"
 )
 
+const sharedQueue = "faas-request"
+
 func main() {
 	readConfig := ReadConfig{}
-	config, configErr := readConfig.Read()
-	if configErr != nil {
-		panic(configErr)
+	config, err := readConfig.Read()
+	if err != nil {
+		panic(err)
 	}
 
 	log.SetFlags(0)
@@ -35,7 +37,8 @@ func main() {
 	hostname, _ := os.Hostname()
 
 	sha, release := version.GetReleaseInfo()
-	log.Printf("Starting queue-worker (Community Edition). Version: %s\tGit Commit: %s", release, sha)
+	log.Printf("Starting queue-worker (Community Edition). Concurrency: %d\tChannel: %s\tVersion: %s\tGit Commit: %s",
+		config.MaxInflight, sharedQueue, release, sha)
 
 	client := makeClient()
 
@@ -167,7 +170,7 @@ func main() {
 		reconnectDelay: config.ReconnectDelay,
 		quitCh:         make(chan struct{}),
 
-		subject:        config.NatsChannel,
+		subject:        sharedQueue,
 		qgroup:         config.NatsQueueGroup,
 		messageHandler: messageHandler,
 		maxInFlight:    config.MaxInflight,

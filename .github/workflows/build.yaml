@@ -12,8 +12,11 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.18.x]
+        go-version: [1.19.x]
         os: [ubuntu-latest]
+    concurrency: 
+      group: ${{ github.ref }}
+      cancel-in-progress: true
 
     runs-on: ${{ matrix.os }}
 
@@ -24,15 +27,24 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Get Repo Owner
-        id: get_repo_owner
-        run: echo ::set-output name=repo_owner::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+        uses: docker/setup-buildx-action@v2
+
       - name: Get TAG
         id: get_tag
-        run: echo ::set-output name=TAG::latest-dev
+        run: echo TAG="latest-dev">> $GITHUB_ENV
+
+      - name: Get git commit
+        id: get_git_commit
+        run: echo "GIT_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=$(git describe --tags --dirty)" >> $GITHUB_ENV
+      - name: Get Repo Owner
+        id: get_repo_owner
+        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" > $GITHUB_ENV
+
       - name: Build x86_64 container into library
         uses: docker/build-push-action@v2
         with:
@@ -41,20 +53,20 @@ jobs:
           outputs: "type=docker,push=false"
           platforms: linux/amd64
           build-args: |
-            VERSION=${{ steps.get_tag.outputs.TAG }}
+            VERSION=${{ env.TAG }}
             GIT_COMMIT=${{ github.sha }}
           tags: |
-            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ github.sha }}
+            ghcr.io/${{ env.REPO_OWNER }}/queue-worker:${{ github.sha }}
 
       - name: Build multi-arch containers for validation only
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile
           outputs: "type=image,push=false"
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           build-args: |
-            VERSION=${{ steps.get_tag.outputs.TAG }}
+            VERSION=${{ env.TAG }}
             GIT_COMMIT=${{ github.sha }}
           tags: |
-            ghcr.io/${{ steps.get_repo_owner.outputs.repo_owner }}/queue-worker:${{ github.sha }}
+            ghcr.io/${{ env.REPO_OWNER }}/queue-worker:${{ github.sha }}

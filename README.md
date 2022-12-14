@@ -1,4 +1,4 @@
-## queue-worker for NATS Streaming
+## queue-worker (Community Edition) for NATS Streaming
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)
 [![Build Status](https://travis-ci.com/openfaas/nats-queue-worker.svg?branch=master)](https://travis-ci.com/openfaas/nats-queue-worker)
@@ -8,7 +8,7 @@
 [![OpenFaaS](https://img.shields.io/badge/openfaas-serverless-blue.svg)](https://www.openfaas.com)
 [![Derek App](https://alexellis.o6s.io/badge?owner=openfaas&repo=nats-queue-worker)](https://github.com/alexellis/derek/)
 
-The queue-worker processes asynchronous function invocation requests, you can read more about this in the [async documentation](https://docs.openfaas.com/reference/async/)
+The queue-worker (Community Edition) processes asynchronous function invocation requests, you can read more about this in the [async documentation](https://docs.openfaas.com/reference/async/)
 
 Docker Hub image: [openfaas/queue-worker](https://hub.docker.com/r/openfaas/queue-worker/)
 
@@ -27,7 +27,6 @@ Screenshots from keynote / video - find out more over at https://www.openfaas.co
 | Parameter               | Description                           | Default                                                    |
 | ----------------------- | ----------------------------------    | ---------------------------------------------------------- |
 | `write_debug` | Print verbose logs | `false` |
-| `max_inflight` | Number of messages sent to queue worker and how many functions are invoked concurrently. | `1` |
 | `faas_gateway_address` | Address of gateway DNS name | `gateway` |
 | `faas_gateway_port` | Port of gateway service | `8080` |
 | `faas_max_reconnect` | An integer of the amount of reconnection attempts when the NATS connection is lost | `120` |

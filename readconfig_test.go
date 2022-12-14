@@ -56,18 +56,6 @@ func Test_ReadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	want = "foo"
-	if config.NatsChannel != want {
-		t.Logf("NatsChannel want `%s`, got `%s`\n", want, config.NatsChannel)
-		t.Fail()
-	}
-
-	want = "bar"
-	if config.NatsQueueGroup != want {
-		t.Logf("NatsQueueGroup want `%s`, got `%s`\n", want, config.NatsQueueGroup)
-		t.Fail()
-	}
-
 	want = "test_gatewayaddr"
 	if config.GatewayAddress != want {
 		t.Logf("GatewayAddress want `%s`, got `%s`\n", want, config.GatewayAddress)
@@ -96,12 +84,6 @@ func Test_ReadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	wantMaxInflight := 10
-	if config.MaxInflight != wantMaxInflight {
-		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
-		t.Fail()
-	}
-
 	wantAckWait := time.Millisecond * 10
 	if config.AckWait != wantAckWait {
 		t.Logf("maxInflight want `%v`, got `%v`\n", wantAckWait, config.AckWait)
@@ -112,12 +94,6 @@ func Test_ReadConfig(t *testing.T) {
 	os.Unsetenv("ack_wait")
 
 	config, _ = readConfig.Read()
-
-	wantMaxInflight = 1
-	if config.MaxInflight != wantMaxInflight {
-		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
-		t.Fail()
-	}
 
 	wantAckWait = time.Second * 30
 	if config.AckWait != wantAckWait {
@@ -130,28 +106,10 @@ func Test_ReadConfig(t *testing.T) {
 
 	config, _ = readConfig.Read()
 
-	wantMaxInflight = 1
-	if config.MaxInflight != wantMaxInflight {
-		t.Logf("maxInflight want `%v`, got `%v`\n", wantMaxInflight, config.MaxInflight)
-		t.Fail()
-	}
-
 	wantAckWait = time.Second * 30
 	if config.AckWait != wantAckWait {
 		t.Logf("ackWait want `%v`, got `%v`\n", wantAckWait, config.AckWait)
 		t.Fail()
-	}
-}
-
-func Test_ReadConfig_NatsChannelDefault(t *testing.T) {
-	readConfig := ReadConfig{}
-
-	os.Setenv("faas_nats_channel", "")
-	cfg, _ := readConfig.Read()
-
-	want := "faas-request"
-	if cfg.NatsChannel != want {
-		t.Errorf("NatsChannel want %v, got %v", want, cfg.NatsChannel)
 	}
 }
 

@@ -45,12 +45,6 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 		cfg.NatsClusterName = "faas-cluster"
 	}
 
-	if val, exists := os.LookupEnv("faas_nats_channel"); exists && val != "" {
-		cfg.NatsChannel = val
-	} else {
-		cfg.NatsChannel = "faas-request"
-	}
-
 	if val, exists := os.LookupEnv("faas_nats_queue_group"); exists && val != "" {
 		cfg.NatsQueueGroup = val
 	} else {
@@ -88,15 +82,6 @@ func (ReadConfig) Read() (QueueWorkerConfig, error) {
 			cfg.WriteDebug = true
 		} else {
 			cfg.WriteDebug = false
-		}
-	}
-
-	if value, exists := os.LookupEnv("max_inflight"); exists {
-		val, err := strconv.Atoi(value)
-		if err != nil {
-			log.Println("max_inflight error:", err)
-		} else {
-			cfg.MaxInflight = val
 		}
 	}
 
@@ -141,7 +126,6 @@ type QueueWorkerConfig struct {
 	NatsAddress     string
 	NatsPort        int
 	NatsClusterName string
-	NatsChannel     string
 	NatsQueueGroup  string
 
 	GatewayAddress string
