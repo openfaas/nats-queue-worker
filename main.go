@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -39,6 +38,8 @@ func main() {
 	sha, release := version.GetReleaseInfo()
 	log.Printf("Starting queue-worker (Community Edition). Concurrency: %d\tChannel: %s\tVersion: %s\tGit Commit: %s",
 		config.MaxInflight, sharedQueue, release, sha)
+
+	log.Printf("[Warning] NATS Streaming is deprecated and will be removed in a future release. See: https://www.openfaas.com/blog/jetstream-for-openfaas/")
 
 	client := makeClient()
 
@@ -99,7 +100,7 @@ func main() {
 			timeTaken := time.Since(started).Seconds()
 
 			if req.CallbackURL != nil {
-				resultStatusCode, resultErr := postResult(&client,
+				resultStatusCode, err := postResult(&client,
 					res,
 					functionResult,
 					req.CallbackURL.String(),
@@ -108,8 +109,8 @@ func main() {
 					req.Function,
 					timeTaken)
 
-				if resultErr != nil {
-					log.Printf("[#%d] Posted callback to: %s - status %d, error: %s\n", i, req.CallbackURL.String(), http.StatusServiceUnavailable, resultErr.Error())
+				if err != nil {
+					log.Printf("[#%d] Posted callback to: %s - status %d, error: %s\n", i, req.CallbackURL.String(), http.StatusServiceUnavailable, err.Error())
 				} else {
 					log.Printf("[#%d] Posted result to %s - status: %d", i, req.CallbackURL.String(), resultStatusCode)
 				}
@@ -121,7 +122,7 @@ func main() {
 		if res.Body != nil {
 			defer res.Body.Close()
 
-			resData, err := ioutil.ReadAll(res.Body)
+			resData, err := io.ReadAll(res.Body)
 			functionResult = resData
 
 			if err != nil {
@@ -140,7 +141,7 @@ func main() {
 		if req.CallbackURL != nil {
 			log.Printf("[#%d] Callback to: %s\n", i, req.CallbackURL.String())
 
-			resultStatusCode, resultErr := postResult(&client,
+			resultStatusCode, err := postResult(&client,
 				res,
 				functionResult,
 				req.CallbackURL.String(),
@@ -149,8 +150,8 @@ func main() {
 				req.Function,
 				timeTaken)
 
-			if resultErr != nil {
-				log.Printf("[#%d] Error posting to callback-url: %s\n", i, resultErr)
+			if err != nil {
+				log.Printf("[#%d] Error posting to callback-url: %s\n", i, err)
 			} else {
 				log.Printf("[#%d] Posted result for %s to callback-url: %s, status: %d", i, req.Function, req.CallbackURL.String(), resultStatusCode)
 			}
@@ -177,8 +178,8 @@ func main() {
 		ackWait:        config.AckWait,
 	}
 
-	if initErr := natsQueue.connect(); initErr != nil {
-		log.Panic(initErr)
+	if err := natsQueue.connect(); err != nil {
+		log.Panic(err)
 	}
 
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
@@ -186,6 +187,7 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	<-signalChan
+
 	fmt.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
 	if err := natsQueue.closeConnection(); err != nil {
 		log.Panicf("Cannot close connection to %s because of an error: %v\n", natsQueue.natsURL, err)
@@ -202,7 +204,6 @@ func makeClient() http.Client {
 			Timeout:   30 * time.Second,
 			KeepAlive: 0,
 		}).DialContext,
-
 		MaxIdleConns:          1,
 		DisableKeepAlives:     true,
 		IdleConnTimeout:       120 * time.Millisecond,
@@ -225,7 +226,6 @@ func postResult(client *http.Client, functionRes *http.Response, result []byte, 
 	}
 
 	request, err := http.NewRequest(http.MethodPost, callbackURL, reader)
-
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("unable to post result, error: %s", err.Error())
 	}

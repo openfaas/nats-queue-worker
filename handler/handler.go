@@ -8,7 +8,8 @@ import (
 
 const sharedQueue = "faas-request"
 
-// CreateNATSQueue ready for asynchronous processing
+// CreateNATSQueue ready for asynchronous message processing of paylods of
+// up to a maximum of 256KB in size.
 func CreateNATSQueue(address string, port int, clusterName, channel string, clientConfig NATSConfig) (*NATSQueue, error) {
 	var err error
 	natsURL := fmt.Sprintf("nats://%s:%d", address, port)
