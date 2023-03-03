@@ -10,6 +10,14 @@
 
 The queue-worker (Community Edition) processes asynchronous function invocation requests, you can read more about this in the [async documentation](https://docs.openfaas.com/reference/async/)
 
+## Notice
+
+All OpenFaaS users will need to move to NATS JetStream before June 2022, at which point, the vendor will stop providing support and fixes.
+ 
+Learn more: [The Next Generation of Queuing: JetStream for OpenFaaS](https://www.openfaas.com/blog/jetstream-for-openfaas/)
+
+## Usage
+
 Docker Hub image: [openfaas/queue-worker](https://hub.docker.com/r/openfaas/queue-worker/)
 
 License: MIT
