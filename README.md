@@ -18,10 +18,6 @@ Learn more: [The Next Generation of Queuing: JetStream for OpenFaaS](https://www
 
 ## Usage
 
-Docker Hub image: [openfaas/queue-worker](https://hub.docker.com/r/openfaas/queue-worker/)
-
-License: MIT
-
 Screenshots from keynote / video - find out more over at https://www.openfaas.com/
 
 <img width="1440" alt="screen shot 2017-10-26 at 15 55 25" src="https://user-images.githubusercontent.com/6358735/32060207-049d4afa-ba66-11e7-8fc2-f4a0a84cbdaf.png">
