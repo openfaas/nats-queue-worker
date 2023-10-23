@@ -1,5 +1,5 @@
 
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.19-alpine as build
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.21-alpine as build
 
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0

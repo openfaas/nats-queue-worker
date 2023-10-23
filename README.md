@@ -1,3 +1,12 @@
+## Notice
+
+[NATS Streaming](https://github.com/nats-io/nats-streaming-server) was deprecated in June 2023 by Synadia, and will receive no more updates, including for critical security issues.
+
+Migrate to OpenFaaS Standard for NATS JetStream, learn more:
+
+* [Docs: JetStream for OpenFaaS](https://docs.openfaas.com/openfaas-pro/jetstream/)
+* [Announcement: The Next Generation of Queuing: JetStream for OpenFaaS](https://www.openfaas.com/blog/jetstream-for-openfaas/)
+
 ## queue-worker (Community Edition) for NATS Streaming
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)](https://goreportcard.com/badge/github.com/openfaas/nats-queue-worker)
@@ -9,12 +18,6 @@
 [![Derek App](https://alexellis.o6s.io/badge?owner=openfaas&repo=nats-queue-worker)](https://github.com/alexellis/derek/)
 
 The queue-worker (Community Edition) processes asynchronous function invocation requests, you can read more about this in the [async documentation](https://docs.openfaas.com/reference/async/)
-
-## Notice
-
-All OpenFaaS users will need to move to NATS JetStream before June 2022, at which point, the vendor will stop providing support and fixes.
- 
-Learn more: [The Next Generation of Queuing: JetStream for OpenFaaS](https://www.openfaas.com/blog/jetstream-for-openfaas/)
 
 ## Usage
 
