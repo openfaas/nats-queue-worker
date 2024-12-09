@@ -47,7 +47,7 @@ func main() {
 	messageHandler := func(msg *stan.Msg) {
 		i := atomic.AddUint64(&counter, 1)
 
-		log.Printf("[#%d] Received on [%s]: '%s'\n", i, msg.Subject, msg)
+		log.Printf("[#%d] Received on [%s]: '%s'", i, msg.Subject, msg)
 
 		started := time.Now()
 
@@ -60,7 +60,7 @@ func main() {
 		xCallID := req.Header.Get("X-Call-Id")
 
 		functionURL := makeFunctionURL(&req, &config, req.Path, req.QueryString)
-		fmt.Printf("[#%d] Invoking: %s with %d bytes, via: %s\n", i, req.Function, len(req.Body), functionURL)
+		fmt.Printf("[#%d] Invoking: %s with %d bytes, via: %s", i, req.Function, len(req.Body), functionURL)
 
 		if config.DebugPrintBody {
 			fmt.Println(string(req.Body))
@@ -72,6 +72,8 @@ func main() {
 			log.Printf("[#%d] Unable to post message due to invalid URL, error: %s", i, err.Error())
 			return
 		}
+
+		req.Header.Set("User-Agent", "openfaas-ce/nats-queue-worker")
 
 		defer request.Body.Close()
 		copyHeaders(request.Header, &req.Header)
@@ -110,7 +112,7 @@ func main() {
 					timeTaken)
 
 				if err != nil {
-					log.Printf("[#%d] Posted callback to: %s - status %d, error: %s\n", i, req.CallbackURL.String(), http.StatusServiceUnavailable, err.Error())
+					log.Printf("[#%d] Posted callback to: %s - status %d, error: %s", i, req.CallbackURL.String(), http.StatusServiceUnavailable, err.Error())
 				} else {
 					log.Printf("[#%d] Posted result to %s - status: %d", i, req.CallbackURL.String(), resultStatusCode)
 				}
@@ -132,14 +134,14 @@ func main() {
 			if config.WriteDebug {
 				fmt.Println(string(functionResult))
 			} else {
-				fmt.Printf("[#%d] %s returned %d bytes\n", i, req.Function, len(functionResult))
+				fmt.Printf("[#%d] %s returned %d bytes", i, req.Function, len(functionResult))
 			}
 		}
 
 		timeTaken := time.Since(started).Seconds()
 
 		if req.CallbackURL != nil {
-			log.Printf("[#%d] Callback to: %s\n", i, req.CallbackURL.String())
+			log.Printf("[#%d] Callback to: %s", i, req.CallbackURL.String())
 
 			resultStatusCode, err := postResult(&client,
 				res,
@@ -151,7 +153,7 @@ func main() {
 				timeTaken)
 
 			if err != nil {
-				log.Printf("[#%d] Error posting to callback-url: %s\n", i, err)
+				log.Printf("[#%d] Error posting to callback-url: %s", i, err)
 			} else {
 				log.Printf("[#%d] Posted result for %s to callback-url: %s, status: %d", i, req.Function, req.CallbackURL.String(), resultStatusCode)
 			}
@@ -190,7 +192,7 @@ func main() {
 
 	fmt.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
 	if err := natsQueue.closeConnection(); err != nil {
-		log.Panicf("Cannot close connection to %s because of an error: %v\n", natsQueue.natsURL, err)
+		log.Panicf("Cannot close connection to %s because of an error: %v", natsQueue.natsURL, err)
 	}
 	close(signalChan)
 }
