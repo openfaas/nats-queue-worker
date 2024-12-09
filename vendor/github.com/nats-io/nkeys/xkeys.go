@@ -1,4 +1,4 @@
-// Copyright 2022 The NATS Authors
+// Copyright 2022-2024 The NATS Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,6 +15,7 @@ package nkeys
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/binary"
 	"io"
@@ -38,18 +39,20 @@ type ckp struct {
 	seed [curveKeyLen]byte // Private raw key.
 }
 
-// CreateUser will create a User typed KeyPair.
+// CreateCurveKeys will create a Curve typed KeyPair.
 func CreateCurveKeys() (KeyPair, error) {
-	return CreateCurveKeysWithRand(rand.Reader)
+	return CreateCurveKeysWithRand(nil)
 }
 
-// CreateUser will create a User typed KeyPair with specified rand source.
+// CreateCurveKeysWithRand will create a Curve typed KeyPair
+// with specified rand source.
 func CreateCurveKeysWithRand(rr io.Reader) (KeyPair, error) {
 	var kp ckp
-	_, err := io.ReadFull(rr, kp.seed[:])
+	_, priv, err := ed25519.GenerateKey(rr)
 	if err != nil {
 		return nil, err
 	}
+	kp.seed = [curveKeyLen]byte(priv.Seed())
 	return &kp, nil
 }
 
@@ -85,7 +88,7 @@ func (pair *ckp) PrivateKey() ([]byte, error) {
 	return Encode(PrefixBytePrivate, pair.seed[:])
 }
 
-func decodePubCurveKey(src string, dest [curveKeyLen]byte) error {
+func decodePubCurveKey(src string, dest []byte) error {
 	var raw [curveDecodeLen]byte // should always be 35
 	n, err := b32Enc.Decode(raw[:], []byte(src))
 	if err != nil {
@@ -112,7 +115,7 @@ func decodePubCurveKey(src string, dest [curveKeyLen]byte) error {
 	}
 
 	// Copy over, ignore prefix byte.
-	copy(dest[:], raw[1:end])
+	copy(dest, raw[1:end])
 	return nil
 }
 
@@ -134,7 +137,7 @@ func (pair *ckp) SealWithRand(input []byte, recipient string, rr io.Reader) ([]b
 		err   error
 	)
 
-	if err = decodePubCurveKey(recipient, rpub); err != nil {
+	if err = decodePubCurveKey(recipient, rpub[:]); err != nil {
 		return nil, ErrInvalidRecipient
 	}
 	if _, err := io.ReadFull(rr, nonce[:]); err != nil {
@@ -159,7 +162,7 @@ func (pair *ckp) Open(input []byte, sender string) ([]byte, error) {
 	}
 	copy(nonce[:], input[vlen:vlen+curveNonceLen])
 
-	if err = decodePubCurveKey(sender, spub); err != nil {
+	if err = decodePubCurveKey(sender, spub[:]); err != nil {
 		return nil, ErrInvalidSender
 	}
 
