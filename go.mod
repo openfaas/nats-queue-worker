@@ -1,6 +1,6 @@
 module github.com/openfaas/nats-queue-worker
 
-go 1.20
+go 1.23
 
 require (
 	github.com/nats-io/stan.go v0.10.4
