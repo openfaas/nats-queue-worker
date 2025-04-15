@@ -3,20 +3,21 @@
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
-# github.com/klauspost/compress v1.17.11
-## explicit; go 1.21
+# github.com/klauspost/compress v1.18.0
+## explicit; go 1.22
 github.com/klauspost/compress/flate
-# github.com/nats-io/nats-server/v2 v2.10.22
-## explicit; go 1.21.0
+github.com/klauspost/compress/internal/le
+# github.com/nats-io/nats-server/v2 v2.10.27
+## explicit; go 1.23.0
 # github.com/nats-io/nats-streaming-server v0.25.6
 ## explicit; go 1.20
-# github.com/nats-io/nats.go v1.37.0
-## explicit; go 1.20
+# github.com/nats-io/nats.go v1.39.1
+## explicit; go 1.22.0
 github.com/nats-io/nats.go
 github.com/nats-io/nats.go/encoders/builtin
 github.com/nats-io/nats.go/internal/parser
 github.com/nats-io/nats.go/util
-# github.com/nats-io/nkeys v0.4.8
+# github.com/nats-io/nkeys v0.4.10
 ## explicit; go 1.20
 github.com/nats-io/nkeys
 # github.com/nats-io/nuid v1.0.1
